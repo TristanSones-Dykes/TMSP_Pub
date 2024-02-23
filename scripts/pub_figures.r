@@ -135,7 +135,7 @@ ScHydropathy_scatter_marginals_plot
 
 ggsave(filename = here("results", "figures", "ScHydropathy_scatter_marginals_KD.pdf"), 
        plot = ScHydropathy_scatter_marginals_plot, 
-       width = 8, height = 7, dpi = 300)
+       width = 7, height = 6, dpi = 300)
 
 
 # combine figures into grid - not yet done
