@@ -174,6 +174,9 @@ r_phobius <- function(protein_AA_path, fullSignal = FALSE, subset = NULL) {
         # select first [subset] AA of each protein
         AA_subset <- subseq(AA_stringset, start = 1, end = subset)
         writeXStringSet(AA_subset, file = here("data", "Proteins", "first_60", file_name))
+
+        # set protein_AA_path to the new subset
+        protein_AA_path <- here("data", "Proteins", "first_60", file_name)
     }
 
     # call phobius on file
