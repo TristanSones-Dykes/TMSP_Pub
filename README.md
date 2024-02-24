@@ -37,8 +37,8 @@ All results of data analysis.
 
 ## scripts
 
-Scripts for producing figures, in .R
+Scripts for producing figures and reports (.Rmd, .R)
 
 ## src
 
-Source scripts for running protein-level analysis.
+Source scripts for running protein-level analysis (.py, .R)

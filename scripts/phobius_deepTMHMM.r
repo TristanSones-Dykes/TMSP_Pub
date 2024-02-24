@@ -5,6 +5,11 @@ source(here("src", "hydrophobicity.r"))
 source(here("src", "motif_analysis.r"))
 library(mixtools)
 
+# ---------- #
+# script that runs phobius and deepTMHMM on the full protein sequences
+# and compares the classifications of each individual protein(s)
+# ---------- #
+
 protein_paths <- base::Map(paste, here("data", "Proteins", "full"), list.files(here("data", "Proteins", "full")), sep = "/")
 species_names <- gsub(".fasta", "", list.files(here("data", "Proteins", "full")))
 
