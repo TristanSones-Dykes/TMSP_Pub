@@ -1,3 +1,10 @@
+###
+# pub_figures.r
+# The purpose of this script is to generate all figures for the writeup
+# It uses post-processed data in results so that it can be run without
+# signalP and phobius related dependencies.
+###
+
 library(here)
 library(tidyverse)
 library(cowplot)
@@ -5,97 +12,163 @@ library(ggExtra)
 library(ggplotify)
 library(ggthemes)
 library(vcd)
-theme_set(theme_stata())
+theme_set(theme_cowplot(font_size = 10))
 
-###
-# The purpose of this script is to generate all figures for the writeup
-# It uses post-processed data in results so that it can be run without
-# signalP and phobius related dependencies.
-###
 
-# Load data
+# Load data with S. cerevisiae hydropathy calculation
+
 hydropathy_df <- read_csv(here("results", "figures", "SC_first_60.csv"))
 
-screened_non_srp <- read_tsv(here("data", "SC_screened.txt"), col_names = FALSE, show_col_types = FALSE) %>%
-    pull(X1)
-verified_srp <- read_tsv(here("data", "SC_SRP.txt"), col_names = FALSE, show_col_types = FALSE) %>%
-    pull(X1)
-verified_non_srp <- read_tsv(here("data", "SC_non_SRP.txt"), col_names = FALSE, show_col_types = FALSE) %>%
-    pull(X1)
+screened_non_srp <- read_lines(here("data", "SC_screened.txt"))
+verified_srp     <- read_lines(here("data", "SC_SRP.txt"))
+verified_non_srp <- read_lines(here("data", "SC_non_SRP.txt"))
 
 labelled_df <- hydropathy_df %>% 
-    mutate(`Experimental label` = case_when(seqid %in% verified_non_srp ~ "Cleaved SP",
-                           seqid %in% screened_non_srp ~ "Cleaved SP",
-                           seqid %in% verified_srp ~ "Non-cleaved SP",
-                           TRUE ~ "unlabelled"))
+  mutate(`Experimental label` = 
+           case_when(seqid %in% verified_non_srp ~ "Sec63-dependent",
+                     seqid %in% screened_non_srp ~ "Sec63-dependent",
+                     seqid %in% verified_srp ~ "SRP-dependent",
+                     TRUE ~ "Unverified"))
 
 verified_df <- labelled_df %>% 
-    filter(`Experimental label` != "unlabelled")
+  filter(`Experimental label` != "Unverified")
 
-# plot x axis (0, 35)
+# plot helix length axis
 lower <- 5 
 upper <- 35
-x_delim <- seq(lower, upper, 10)
-x_minor <- seq(lower, upper, 5)
-lims <- c(lower, upper)
+helix_delim <- seq(lower, upper, 10)
+helix_minor <- seq(lower, upper, 5)
+helix_limits <- c(lower, upper)
+scale_x_helix_length <- 
+  scale_x_continuous(breaks = helix_delim,
+                     limits = helix_limits,
+                     minor_breaks = helix_minor)
 
-# Figure 1A - Image of cleaved vs non cleaved SP
+# plot Kyte-Doolittle hydrophobicity axis
+rough_KD_limits = c(min(labelled_df$KD_max_hydropathy),
+                    max(labelled_df$KD_max_hydropathy))
+rough_KD_limits
+ 
+scale_y_KD_hydropathy <- 
+  scale_y_continuous(breaks = 0:4, 
+                     limits = c(0, 4.5),
+                     expand = c(0,0))
 
-# placeholder
-# https://www.mdpi.com/1422-0067/22/21/11871
-Fig_1A <- ggplot(data.frame(x = rnorm(100)), aes(x = x)) + 
-    geom_histogram() + 
-    ggtitle("Placeholder")
+# Figure 1
 
-# Figure 1B - Plot of contingency table of SP/TM regions found by phobius
+# Plot of contingency table of SP/TM regions found by phobius
 # and those verified experimentally
 
 # make contingency table
 contingency_table <- verified_df %>% 
     group_by(`Experimental label`) %>% 
-    summarise(SP = sum(window_type == "TM"),
-              TM = sum(window_type == "SP"))
+    summarise(SP = sum(window_type == "SP"),
+              TM = sum(window_type == "TM"))
+
 contingency_table <- as.table(as.matrix(contingency_table[,2:3]))
 
 names(dimnames(contingency_table)) <- c("Experimental label", "Phobius label")
-rownames(contingency_table) <- c("Non-cleaved SP", "Cleaved SP")
+rownames(contingency_table) <- c("SRP", "Sec63")
 
 # For a two-way table, mosaic() fits a model of independence, [A][B] or ~A+B as an R formula
 # https://www.datavis.ca/courses/VCD/vcd-tutorial.pdf
-Fig_1B <- as.grob(~vcd::mosaic(contingency_table, shade = TRUE, legend = TRUE, main = "Verified SP/TM regions vs Phobius predictions"))
+ScHydropathy_contingency_plot <- as.grob(~vcd::mosaic(contingency_table, shade = TRUE, legend = TRUE, main = "Verified SP/TM regions vs Phobius predictions"))
 
 
-# FIGURE 1C - Scatter plot of only experimentally verified proteins
-# with histograms on axis
+# Scatter plot of all proteins with SP/TM regions found by phobius
+# Highlighting verified proteins
 
-base <- ggplot(verified_df, aes(x = window_length, y = KD_max_hydropathy, colour = `Experimental label`, group = `Experimental label`)) +
-    geom_point() + 
-    xlab("Window length (aa)") + 
-    ylab("Max hydropathy (KD)") + 
-    ggtitle("Lab verified SP/TM proteins") + 
-    scale_x_continuous(breaks = x_delim, limits = lims, minor_breaks = x_minor)
+breaks_explabel <- c("Sec63-dependent", 
+                     "SRP-dependent",
+                     "Unverified")
+colour_explabel <- c("Sec63-dependent" = "blue", 
+                     "SRP-dependent" = "red",
+                     "Unverified" = "purple")
+size_explabel <- c("Sec63-dependent" = 1.5, 
+                   "SRP-dependent" = 1.5,
+                   "Unverified" = 0.5)
 
-Fig_1C <- ggMarginal(base, type = "histogram", groupColour = TRUE, groupFill = TRUE)
+base_ScScatMarg <- 
+  ggplot(labelled_df, aes(x = window_length, y = KD_max_hydropathy, 
+                                   colour = `Experimental label`, 
+                                   group = `Experimental label`,
+                                   size  = `Experimental label`)) +
+  geom_point() + 
+  xlab("Predicted helix length (AA)") + 
+  ylab("Max. hydropathy (Kyte-Doolittle)") + 
+  # ggtitle("Phobius detected SP/TM regions") + 
+  scale_x_helix_length +
+  scale_y_KD_hydropathy + 
+  scale_colour_manual(breaks = breaks_explabel, values = colour_explabel) +
+  scale_size_manual(breaks = breaks_explabel,values = size_explabel) +
+  theme(legend.box.background = element_rect(colour = "grey60"),
+        legend.box.margin = margin(2, 2, 2, 2, unit = "pt"),
+        legend.justification = c(0.5, 0.5),
+        plot.margin = unit(c(.1,.1,.1,.1), "mm"))
+
+side_ScScatMarg <- 
+  ggplot(labelled_df  %>% 
+           dplyr::mutate(`Experimental label` = 
+                           factor(`Experimental label`,
+                                  levels = rev(breaks_explabel))), 
+         aes(y = KD_max_hydropathy,
+             fill = `Experimental label`,
+             group = `Experimental label`)) +
+  geom_histogram(binwidth = 0.2) +
+  scale_y_KD_hydropathy + 
+  scale_fill_manual(breaks = breaks_explabel, values = colour_explabel) +
+  facet_grid(.~ `Experimental label`, scales = "free_x") +
+  labs(x = "Number of proteins") + 
+  theme(legend.position = "none", 
+        strip.background = element_blank(),
+        strip.text = element_blank(),
+        # axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        plot.margin = unit(c(.1,.1,.1,.1), "mm"))
+
+top_ScScatMarg <- ggplot(labelled_df %>% 
+                   dplyr::mutate(`Experimental label` = 
+                                   factor(`Experimental label`,
+                                          levels = breaks_explabel)), 
+                 aes(x = window_length, 
+                     fill = `Experimental label`, 
+                     group = `Experimental label`)) +
+  geom_histogram(binwidth = 1) +
+  scale_x_helix_length + 
+  scale_fill_manual(values = colour_explabel) +
+  facet_grid(`Experimental label` ~., scales = "free_y") +
+  labs(y = "Number of proteins") + 
+  theme(legend.position = "none", 
+        strip.background = element_blank(),
+        strip.text = element_blank(),
+        # axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        plot.margin = unit(c(.1,.1,.1,.1), "mm"))
+
+ScHydropathy_scatter_marginals_plot <- 
+  plot_grid(top_ScScatMarg, 
+            get_legend(base_ScScatMarg),
+            base_ScScatMarg + 
+              theme(legend.position = "none"), 
+            side_ScScatMarg,
+            ncol = 2,
+            align = "hv",
+            axis = "bl",
+            rel_heights = c(0.55, 1),
+            rel_widths = c(1, 0.65)
+  )
+ScHydropathy_scatter_marginals_plot
+
+ggsave(filename = here("results", "figures", "ScHydropathy_scatter_marginals_KD.pdf"), 
+       plot = ScHydropathy_scatter_marginals_plot, 
+       width = 7, height = 6, dpi = 300)
 
 
-# Figure 1D - Scatter plot of all proteins with SP/TM regions
-# found by phobius
-
-base <- ggplot(labelled_df, aes(x = window_length, y = KD_max_hydropathy, colour = `Experimental label`, group = `Experimental label`)) +
-    geom_point() + 
-    xlab("Window length (aa)") + 
-    ylab("Max hydropathy (KD)") + 
-    ggtitle("Phobius detected SP/TM regions") + 
-    scale_x_continuous(breaks = x_delim, limits = lims, minor_breaks = x_minor)
-
-Fig_1D <- ggMarginal(base, type = "histogram", groupColour = TRUE, groupFill = TRUE)
-
-
-# combine figures into 2x2 grid
-Fig_1 <- plot_grid(Fig_1A, Fig_1B, Fig_1C, Fig_1D, labels = c("A", "B", "C", "D"), ncol = 2, nrow = 2)
+# combine figures into grid - not yet done
+# Fig_1 <- plot_grid(Fig_1A, Fig_1B, Fig_1C, Fig_1D, labels = c("A", "B", "C", "D"), ncol = 2, nrow = 2)
 
 # save figure
-ggsave(here("results", "figures", "Fig_1.jpg"), Fig_1, width = 15, height = 10, dpi = 300)
+# ggsave(here("results", "figures", "Fig_1.jpg"), Fig_1, width = 15, height = 10, dpi = 300)
 
 
 # Figure 2 - histograms of window lengths for each species
