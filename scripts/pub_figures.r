@@ -14,7 +14,7 @@ theme_set(theme_stata())
 ###
 
 # Load data
-rose_df <- read_csv(here("results", "figures", "SC_first_60.csv"))
+hydropathy_df <- read_csv(here("results", "figures", "SC_first_60.csv"))
 
 screened_non_srp <- read_tsv(here("data", "SC_screened.txt"), col_names = FALSE, show_col_types = FALSE) %>%
     pull(X1)
@@ -23,7 +23,7 @@ verified_srp <- read_tsv(here("data", "SC_SRP.txt"), col_names = FALSE, show_col
 verified_non_srp <- read_tsv(here("data", "SC_non_SRP.txt"), col_names = FALSE, show_col_types = FALSE) %>%
     pull(X1)
 
-labelled_df <- rose_df %>% 
+labelled_df <- hydropathy_df %>% 
     mutate(`Experimental label` = case_when(seqid %in% verified_non_srp ~ "Cleaved SP",
                            seqid %in% screened_non_srp ~ "Cleaved SP",
                            seqid %in% verified_srp ~ "Non-cleaved SP",
@@ -68,10 +68,10 @@ Fig_1B <- as.grob(~vcd::mosaic(contingency_table, shade = TRUE, legend = TRUE, m
 # FIGURE 1C - Scatter plot of only experimentally verified proteins
 # with histograms on axis
 
-base <- ggplot(verified_df, aes(x = window_length, y = max_hydropathy, colour = `Experimental label`, group = `Experimental label`)) +
+base <- ggplot(verified_df, aes(x = window_length, y = KD_max_hydropathy, colour = `Experimental label`, group = `Experimental label`)) +
     geom_point() + 
     xlab("Window length (aa)") + 
-    ylab("Max hydropathy (Rose)") + 
+    ylab("Max hydropathy (KD)") + 
     ggtitle("Lab verified SP/TM proteins") + 
     scale_x_continuous(breaks = x_delim, limits = lims, minor_breaks = x_minor)
 
@@ -81,10 +81,10 @@ Fig_1C <- ggMarginal(base, type = "histogram", groupColour = TRUE, groupFill = T
 # Figure 1D - Scatter plot of all proteins with SP/TM regions
 # found by phobius
 
-base <- ggplot(labelled_df, aes(x = window_length, y = max_hydropathy, colour = `Experimental label`, group = `Experimental label`)) +
+base <- ggplot(labelled_df, aes(x = window_length, y = KD_max_hydropathy, colour = `Experimental label`, group = `Experimental label`)) +
     geom_point() + 
     xlab("Window length (aa)") + 
-    ylab("Max hydropathy (Rose)") + 
+    ylab("Max hydropathy (KD)") + 
     ggtitle("Phobius detected SP/TM regions") + 
     scale_x_continuous(breaks = x_delim, limits = lims, minor_breaks = x_minor)
 
