@@ -10,7 +10,7 @@ library(mixtools)
 # that are divided into two groups, cleaved and non cleaved signal peptides.
 # This is using phobius labels.
 #
-# This is also where the figure data is generated for the writeup (stored in results).
+# Also contains development versions of the figures in pub_figures.r
 ###
 
 
@@ -78,16 +78,16 @@ for (i in 1:length(phobius_results)) {
     write.table(TM, file = paste(here("results", "proteins"), paste(species_names[i], "TM.txt", sep = "_"), sep = "/"), row.names = FALSE, col.names = FALSE, quote = FALSE)
 }
 
-# find GMM with k = 2 for SC_first_60
-SC_first_60 <- phobius_df %>% 
-    filter(species == "SC_first_60")
+# find GMM with k = 2 for S_Cerevisiae
+S_Cerevisiae <- phobius_df %>% 
+    filter(species == "S_Cerevisiae")
 
-model <- normalmixEM(SC_first_60$window_length, k = 2)
+model <- normalmixEM(S_Cerevisiae$window_length, k = 2)
 intersection <- uniroot(function(x) {
     dnorm(x, mean = model$mu[1], sd = model$sigma[1]) - dnorm(x, mean = model$mu[2], sd = model$sigma[2])
 }, c(min(model$mu), max(model$mu)))$root
 
-ggplot(SC_first_60, aes(x = window_length)) + 
+ggplot(S_Cerevisiae, aes(x = window_length)) + 
     geom_histogram(aes(y = after_stat(density)), bins = 100) + 
     stat_function(fun = dnorm, args = list(mean = model$mu[1], sd = model$sigma[1]), colour = "blue") + 
     stat_function(fun = dnorm, args = list(mean = model$mu[2], sd = model$sigma[2]), colour = "green") + 
@@ -95,10 +95,10 @@ ggplot(SC_first_60, aes(x = window_length)) +
     geom_vline(xintercept = intersection, colour = "red")
 
 # use intersection to classify SP and TM
-SP <- SC_first_60 %>%
+SP <- S_Cerevisiae %>%
     filter(window_length <= intersection) %>% 
     pull(seqid)
-TM <- SC_first_60 %>%
+TM <- S_Cerevisiae %>%
     filter(window_length > intersection) %>% 
     pull(seqid)
 
@@ -116,7 +116,7 @@ verified_non_srp <- read_tsv(here("data", "SC_non_SRP.txt"), col_names = FALSE, 
     pull(X1)
 
 
-labelled_df <- SC_first_60 %>% 
+labelled_df <- S_Cerevisiae %>% 
     mutate(verified = case_when(seqid %in% verified_non_srp ~ "non SRP",
                            seqid %in% screened_non_srp ~ "non SRP",
                            seqid %in% verified_srp ~ "SRP",
@@ -132,10 +132,10 @@ contingency_table <- labelled_df %>%
 # chisq test
 chisq.test(contingency_table[,2:3])
 
-phobius_proteins_SC <- SC_first_60 %>%
+phobius_proteins_SC <- S_Cerevisiae %>%
     pull(seqid)
 
-SC_AA <- proteins[[6]]
+SC_AA <- proteins[[9]]
 writeXStringSet(SC_AA[phobius_proteins_SC], file = here("results", "proteins", "SC_phobius.fasta"))
 
 # export data to results for figures
@@ -144,7 +144,7 @@ cols <- c("aa", scale_name)
 rose <- scales[, cols]
 colnames(rose) <- c("V1", "V2")
 
-protein_path <- here("data", "Proteins", "SC_first_60.fasta")
+protein_path <- here("data", "Proteins", "S_Cerevisiae.fasta")
 AA_stringset <- readAAStringSet(protein_path)
 
 phobius_output <- r_phobius(protein_path)
@@ -152,11 +152,15 @@ signalp_output <- signalp(protein_path)
 combined_df <- signalp_output %>%
     full_join(phobius_output, by = "seqid")
 
+
+# ------- #
+# DEPRECATED, to be changed to allow for multiple scales at once
+# ------- #
 rose_df <- add_compound_hydropathy_score(combined_df, AA_stringset, useSignalP = FALSE, scale = KD, include_max = TRUE) %>% 
     drop_na(compound_hydropathy) %>% 
     mutate(window_length = window_end - window_start)
 
-write_csv(rose_df, here("results", "figures", "SC_first_60.csv"))
+write_csv(rose_df, here("results", "figures", "S_Cerevisiae.csv"))
 
 
 # -------------

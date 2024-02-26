@@ -16,6 +16,7 @@ theme_set(theme_cowplot(font_size = 10))
 
 
 # Load data with S. cerevisiae hydropathy calculation
+
 hydropathy_df <- read_csv(here("results", "figures", "SC_first_60.csv"))
 
 screened_non_srp <- read_lines(here("data", "SC_screened.txt"))
@@ -32,6 +33,26 @@ labelled_df <- hydropathy_df %>%
 verified_df <- labelled_df %>% 
   filter(`Experimental label` != "Unverified")
 
+# plot helix length axis
+lower <- 5 
+upper <- 35
+helix_delim <- seq(lower, upper, 10)
+helix_minor <- seq(lower, upper, 5)
+helix_limits <- c(lower, upper)
+scale_x_helix_length <- 
+  scale_x_continuous(breaks = helix_delim,
+                     limits = helix_limits,
+                     minor_breaks = helix_minor)
+
+# plot Kyte-Doolittle hydrophobicity axis
+rough_KD_limits = c(min(labelled_df$KD_max_hydropathy),
+                    max(labelled_df$KD_max_hydropathy))
+rough_KD_limits
+ 
+scale_y_KD_hydropathy <- 
+  scale_y_continuous(breaks = 0:4, 
+                     limits = c(0, 4.5),
+                     expand = c(0,0))
 
 # Figure 1
 
@@ -67,7 +88,8 @@ size_explabel <- c("Sec63-dependent" = 1.5,
                    "SRP-dependent" = 1.5,
                    "Unverified" = 0.5)
 
-base_ScScatMarg <- ggplot(labelled_df, aes(x = window_length, y = max_hydropathy, 
+base_ScScatMarg <- 
+  ggplot(labelled_df, aes(x = window_length, y = KD_max_hydropathy, 
                                    colour = `Experimental label`, 
                                    group = `Experimental label`,
                                    size  = `Experimental label`)) +
@@ -75,7 +97,8 @@ base_ScScatMarg <- ggplot(labelled_df, aes(x = window_length, y = max_hydropathy
   xlab("Predicted helix length (AA)") + 
   ylab("Max. hydropathy (Kyte-Doolittle)") + 
   # ggtitle("Phobius detected SP/TM regions") + 
-  scale_x_continuous(breaks = x_delim, limits = lims, minor_breaks = x_minor) +
+  scale_x_helix_length +
+  scale_y_KD_hydropathy + 
   scale_colour_manual(breaks = breaks_explabel, values = colour_explabel) +
   scale_size_manual(breaks = breaks_explabel,values = size_explabel) +
   theme(legend.box.background = element_rect(colour = "grey60"),
@@ -83,14 +106,16 @@ base_ScScatMarg <- ggplot(labelled_df, aes(x = window_length, y = max_hydropathy
         legend.justification = c(0.5, 0.5),
         plot.margin = unit(c(.1,.1,.1,.1), "mm"))
 
-side_ScScatMarg <- ggplot(labelled_df  %>% 
-                    dplyr::mutate(`Experimental label` = 
-                                    factor(`Experimental label`,
-                                           levels = rev(breaks_explabel))), 
-                  aes(y = max_hydropathy,
-                      fill = `Experimental label`,
-                      group = `Experimental label`)) +
-  geom_histogram(binwidth = 0.1) +
+side_ScScatMarg <- 
+  ggplot(labelled_df  %>% 
+           dplyr::mutate(`Experimental label` = 
+                           factor(`Experimental label`,
+                                  levels = rev(breaks_explabel))), 
+         aes(y = KD_max_hydropathy,
+             fill = `Experimental label`,
+             group = `Experimental label`)) +
+  geom_histogram(binwidth = 0.2) +
+  scale_y_KD_hydropathy + 
   scale_fill_manual(breaks = breaks_explabel, values = colour_explabel) +
   facet_grid(.~ `Experimental label`, scales = "free_x") +
   labs(x = "Number of proteins") + 
@@ -109,6 +134,7 @@ top_ScScatMarg <- ggplot(labelled_df %>%
                      fill = `Experimental label`, 
                      group = `Experimental label`)) +
   geom_histogram(binwidth = 1) +
+  scale_x_helix_length + 
   scale_fill_manual(values = colour_explabel) +
   facet_grid(`Experimental label` ~., scales = "free_y") +
   labs(y = "Number of proteins") + 

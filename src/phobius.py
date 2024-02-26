@@ -3,7 +3,6 @@ import mechanicalsoup
 from numpy import full
 import pandas as pd
 import os
-import signalp as sp
 
 
 # ------ Description ------
