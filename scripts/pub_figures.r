@@ -71,6 +71,7 @@ contingency_table <- verified_df %>%
               TM = sum(window_type == "TM"))
 
 contingency_table <- as.table(as.matrix(contingency_table[,2:3]))
+chisq.test(contingency_table)
 
 names(dimnames(contingency_table)) <- c("Experimental label", "Phobius label")
 rownames(contingency_table) <- c("SRP", "Sec63")
