@@ -12,7 +12,9 @@ library(ggExtra)
 library(ggplotify)
 library(ggthemes)
 library(vcd)
-theme_set(theme_cowplot(font_size = 10))
+library(Biostrings)
+theme_set(theme_cowplot(font_size = 10) + 
+            theme(strip.background = element_blank()))
 
 
 # Load data with S. cerevisiae hydropathy calculation
@@ -40,9 +42,11 @@ helix_delim <- seq(lower, upper, 10)
 helix_minor <- seq(lower, upper, 5)
 helix_limits <- c(lower, upper)
 scale_x_helix_length <- 
-  scale_x_continuous(breaks = helix_delim,
+  scale_x_continuous("Predicted helix length (AA)",
+                     breaks = helix_delim,
                      limits = helix_limits,
-                     minor_breaks = helix_minor)
+                     minor_breaks = helix_minor,
+                     expand = expansion(mult = 0, add = 0.6))
 
 # plot Kyte-Doolittle hydrophobicity axis
 rough_KD_limits = c(min(labelled_df$KD_max_hydropathy),
@@ -50,7 +54,8 @@ rough_KD_limits = c(min(labelled_df$KD_max_hydropathy),
 rough_KD_limits
  
 scale_y_KD_hydropathy <- 
-  scale_y_continuous(breaks = 0:4, 
+  scale_y_continuous("Max. hydropathy (Kyte-Doolittle)",
+                     breaks = 0:4, 
                      limits = c(0, 4.5),
                      expand = c(0,0))
 
@@ -94,8 +99,6 @@ base_ScScatMarg <-
                                    group = `Experimental label`,
                                    size  = `Experimental label`)) +
   geom_point() + 
-  xlab("Predicted helix length (AA)") + 
-  ylab("Max. hydropathy (Kyte-Doolittle)") + 
   # ggtitle("Phobius detected SP/TM regions") + 
   scale_x_helix_length +
   scale_y_KD_hydropathy + 
@@ -189,8 +192,16 @@ read_phobius <- function(protein_AA_path) {
 }
 
 # attach path to protein file names
-protein_paths <- base::Map(paste, here("data", "proteins", "pub"), list.files(here("data", "proteins", "pub")), sep = "/")
-species_names <- gsub(".fasta", "", list.files(here("data", "proteins", "pub")))
+species_df    <- here("data", "proteins", "pub", "proteome_table.txt") %>%
+  read_tsv(comment = "#") %>%
+  # Next line makes Nicename a factor in same order as given
+  mutate(Nicename = as_factor(Nicename),
+         Nicename_splitline = 
+           factor(Nicename, levels = Nicename,
+                  labels = str_replace(Nicename, 
+                                       pattern = " ", 
+                                       replacement = "\n")))
+protein_paths <- here("data", "proteins", "pub", species_df$Filename)
 
 # read in protein sequences
 proteins <- lapply(protein_paths, readAAStringSet)
@@ -202,35 +213,29 @@ for (i in 1:length(phobius_results)) {
     phobius_results[[i]] <- phobius_results[[i]] %>% 
         filter(phobius_end != 0) %>%
         mutate(window_length = phobius_end - phobius_start) %>% 
-        mutate(species = species_names[i])
+        mutate(species = species_df$Nicename_splitline[i])
 }
 
 # join and reset row names
 phobius_df <- do.call(rbind, phobius_results)
 rownames(phobius_df) <- NULL
 
-species_order <- list("S_Cerevisiae" = 1,
-              "C_Albicans" = 2,
-              "N_Crassa" = 3,
-              "P_Oryzae" = 4,
-              "Z_Tritici" = 5,
-              "A_Fumigatus" = 6,
-              "S_Pombe" = 7,
-              "P_Graminis" = 8,
-              "U_Maydis" = 9,
-              "C_Neoformans" = 10,
-              "R_Delemar" = 11,
-              "B_Dendrobatitis" = 12)
-phobius_df$species <- factor(phobius_df$species, levels = names(species_order))
-
-plot <- ggplot(phobius_df, aes(x = window_length, colour = phobius_type)) + 
-    geom_histogram(aes(y = after_stat(density)), bins = 100) + 
-    facet_wrap(~species, scales = "free_y", ncol = 1) + 
-    labs(x = "Window Length (AA)", y = "Density") + 
-    scale_x_continuous(breaks = seq(0, 35, 10))
+phobius_plot <- 
+  ggplot(phobius_df, aes(x = window_length, fill = phobius_type)) + 
+  geom_histogram(binwidth = 1, center = 0) + 
+  facet_wrap(~species, scales = "free_y", ncol = 1, 
+             strip.position = "right") + 
+  labs(y = "Number of proteins") + 
+  scale_x_helix_length +
+  scale_fill_manual("Phobius prediction", 
+                    values = c("SP" = "blue", "TM" = "red")) + 
+  theme(legend.position = "bottom", 
+        strip.text.y.right = element_text(face = "italic", angle = 0))
 
 # save 
-ggsave(here("results", "figures", "phobius_window_length.jpg"), plot, width = 15, height = 50, units = "cm")
+ggsave(filename = here("results", "figures", "phobius_helix_length.pdf"),
+       plot = phobius_plot, 
+       width = 5, height = 8)
 
 
 # Figure 3 - DeepTMHMM
@@ -361,3 +366,4 @@ labelled_df %>%
     geom_histogram(aes(y = after_stat(density)), bins = 100) +
     labs(x = "Window Length (AA)", y = "Density", title = "Experimental window lengths, summed if multiple, with alpha mixing") +
     scale_x_continuous(breaks = seq(0, 60, 10))
+
