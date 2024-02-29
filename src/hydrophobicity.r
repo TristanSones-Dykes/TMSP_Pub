@@ -236,7 +236,7 @@ add_compound_hydropathy_score <- function(input_window_df, AA_stringset, scale =
             mutate(window_end = phobius_end) %>%
             mutate(window_type = phobius_type) %>%
             mutate(window_origin = "phobius") %>%
-            select(-phobius_start, -phobius_end, -signalp_start, -signalp_end, -phobius_type, -signalp_type)
+            select(-phobius_start, -phobius_end, -phobius_type)
     }
 
     # filtering out proteins with no window
