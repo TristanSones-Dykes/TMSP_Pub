@@ -12,19 +12,24 @@ source(here("src", "hydrophobicity.r"))
 
 # --- Run all sequences through phobius --- #
 
-# read file names and remove proteome_table.txt
-files <- list.files(here("data", "proteins", "pub"))
-files <- files[files != "proteome_table.txt"]
-
 # attach path to protein file names
-protein_paths <- base::Map(paste, here("data", "proteins", "pub"), files, sep = "/")
-species_names <- gsub(".fasta", "", files)
+species_df <- here("data", "proteins", "pub", "proteome_table.txt") %>%
+  read_tsv(comment = "#") %>%
+  # Next line makes Nicename a factor in same order as given
+  mutate(Nicename = as_factor(Nicename),
+         Nicename_splitline = 
+           factor(Nicename, levels = Nicename,
+                  labels = str_replace(Nicename, 
+                                       pattern = " ", 
+                                       replacement = "\n")))
+protein_paths <- here("data", "proteins", "pub", species_df$Filename)
+species_names <- species_df$Nicename
 
 # read in protein sequences
 proteins <- lapply(protein_paths, readAAStringSet)
 
 # run phobius
-phobius_results <- lapply(protein_paths, r_phobius)
+phobius_results <- lapply(protein_paths, run_phobius)
 
 # filter out sequences with no signal peptides
 # and add species name
@@ -38,22 +43,6 @@ for (i in 1:length(phobius_results)) {
 # join and reset row names
 phobius_df <- do.call(rbind, phobius_results)
 rownames(phobius_df) <- NULL
-
-# set species order for plots
-species_order <- list("S_Cerevisiae" = 1,
-              "C_Albicans" = 2,
-              "N_Crassa" = 3,
-              "P_Oryzae" = 4,
-              "Z_Tritici" = 5,
-              "A_Fumigatus" = 6,
-              "S_Pombe" = 7,
-              "P_Graminis" = 8,
-              "U_Maydis" = 9,
-              "C_Neoformans" = 10,
-              "R_Delemar" = 11,
-              "B_Dendrobatitis" = 12)
-phobius_df$species <- factor(phobius_df$species, levels = names(species_order))
-
 
 # --- Subset and create S_Cerevisiae.csv --- #
 

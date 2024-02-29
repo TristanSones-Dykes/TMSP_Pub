@@ -149,7 +149,7 @@ compound_hydropathy_score <- function(protein_AAStringSet, window_size = 9) {
 # with the phobius results for each protein, if a SP or TM region
 # is detected, window bounds are returned
 # if fullSignal is TRUE, the full SP length is returned
-r_phobius <- function(protein_AA_path, fullSignal = FALSE, subset = NULL) {
+run_phobius <- function(protein_AA_path, fullSignal = FALSE, subset = NULL) {
     # extract file name from path
     if (fullSignal) {
         file_name <- gsub(".fasta", "_fullSignal", basename(protein_AA_path))

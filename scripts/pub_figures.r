@@ -192,7 +192,7 @@ read_phobius <- function(protein_AA_path) {
 }
 
 # attach path to protein file names
-species_df    <- here("data", "proteins", "pub", "proteome_table.txt") %>%
+species_df <- here("data", "proteins", "pub", "proteome_table.txt") %>%
   read_tsv(comment = "#") %>%
   # Next line makes Nicename a factor in same order as given
   mutate(Nicename = as_factor(Nicename),
