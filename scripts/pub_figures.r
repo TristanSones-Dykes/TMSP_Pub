@@ -64,15 +64,20 @@ scale_y_KD_hydropathy <-
 # Plot of contingency table of SP/TM regions found by phobius
 # and those verified experimentally
 
-# make contingency table
+# make contingency table for display
 contingency_table <- verified_df %>% 
     group_by(`Experimental label`) %>% 
     summarise(SP = sum(window_type == "SP"),
               TM = sum(window_type == "TM"))
-
 contingency_table <- as.table(as.matrix(contingency_table[,2:3]))
-chisq.test(contingency_table)
 
+# run chi-squared independence test and extract p-value
+# the null hypothesis is that the two categorical variables are independent
+# the p-value rejects this, so there is a high association between the phobius label and the experimental label
+test <- chisq.test(contingency_table)
+p_value <- test$p.value
+
+# make table pretty for display
 names(dimnames(contingency_table)) <- c("Experimental label", "Phobius label")
 rownames(contingency_table) <- c("SRP", "Sec63")
 

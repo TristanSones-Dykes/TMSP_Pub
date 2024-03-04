@@ -46,7 +46,7 @@ rownames(phobius_df) <- NULL
 # --- Subset and create S_Cerevisiae.csv --- #
 
 S_Cerevisiae <- phobius_df %>% 
-    filter(species == "S_Cerevisiae") %>%
+    filter(species == "Saccharomyces cerevisiae") %>%
     select(-species)
 
 # extract Rose scale
