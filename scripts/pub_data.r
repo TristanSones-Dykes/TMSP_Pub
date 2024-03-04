@@ -6,7 +6,6 @@
 
 library(here)
 # grab functions from src
-source(here("src", "signal_peptides.r"))
 source(here("src", "hydrophobicity.r"))
 
 
@@ -56,8 +55,8 @@ colnames(rose) <- c("V1", "V2")
 
 # read protein sequence and calculate hydropathy for KD and Rose
 AA_stringset <- readAAStringSet(here("data", "proteins", "pub", "S_Cerevisiae.fasta"))
-KD_df <- add_compound_hydropathy_score(S_Cerevisiae, AA_stringset, useSignalP = FALSE, scale = KD, include_max = TRUE)
-rose_df <- add_compound_hydropathy_score(S_Cerevisiae, AA_stringset, useSignalP = FALSE, scale = rose, include_max = TRUE)
+KD_df <- add_compound_hydropathy_score(S_Cerevisiae, AA_stringset, scale = KD, include_max = TRUE)
+rose_df <- add_compound_hydropathy_score(S_Cerevisiae, AA_stringset, scale = rose, include_max = TRUE)
 
 # rename and join
 KD_df <- KD_df %>% rename(compound_hydropathy = "KD_hydropathy", max_hydropathy = "KD_max_hydropathy")
@@ -67,3 +66,18 @@ SC_output <- KD_df %>%
 
 # write to file
 write.csv(SC_output, here("results", "figures", "SC_first_60.csv"), row.names = FALSE)
+
+# --- Create SP and TM files for each species --- #
+
+# write each phobius_type group of each species to a text file
+for (i in 1:length(phobius_results)) {
+    SP <- phobius_results[[i]] %>% 
+        filter(phobius_type == "SP") %>% 
+        pull(seqid)
+    TM <- phobius_results[[i]] %>% 
+        filter(phobius_type == "TM") %>% 
+        pull(seqid)
+
+    write.table(SP, file = paste(here("results", "proteins"), paste(species_names[i], "SP.txt", sep = "_"), sep = "/"), row.names = FALSE, col.names = FALSE, quote = FALSE)
+    write.table(TM, file = paste(here("results", "proteins"), paste(species_names[i], "TM.txt", sep = "_"), sep = "/"), row.names = FALSE, col.names = FALSE, quote = FALSE)
+}

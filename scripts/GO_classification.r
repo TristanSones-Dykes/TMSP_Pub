@@ -1,8 +1,6 @@
 library(here)
 # grab functions from src
-source(here("src", "signal_peptides.r"))
 source(here("src", "hydrophobicity.r"))
-source(here("src", "motif_analysis.r"))
 library(mixtools)
 
 ###
