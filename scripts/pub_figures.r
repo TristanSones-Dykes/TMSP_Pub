@@ -14,7 +14,8 @@ library(ggthemes)
 library(vcd)
 library(Biostrings)
 theme_set(theme_cowplot(font_size = 10) + 
-            theme(strip.background = element_blank()))
+            theme(strip.background = element_blank(),
+                  plot.margin = unit(c(0,0,0,0), units = "inches")))
 
 
 # Load data with S. cerevisiae hydropathy calculation
@@ -37,7 +38,7 @@ verified_df <- labelled_df %>%
 
 # plot helix length axis
 lower <- 5 
-upper <- 35
+upper <- 33
 helix_delim <- seq(lower, upper, 10)
 helix_minor <- seq(lower, upper, 5)
 helix_limits <- c(lower, upper)
@@ -61,29 +62,100 @@ scale_y_KD_hydropathy <-
 
 # Figure 1
 
-# Plot of contingency table of SP/TM regions found by phobius
+# Plot of contingency table of helix length predicted by phobius
 # and those verified experimentally
 
 # make contingency table for display
-contingency_table <- verified_df %>% 
+contingency_df_length <- verified_df %>% 
+    mutate(`Experimental label` = 
+           factor(`Experimental label`,
+                  levels = c("Sec63-dependent", "SRP-dependent"))
+    ) %>%
     group_by(`Experimental label`) %>% 
-    summarise(SP = sum(window_type == "SP"),
-              TM = sum(window_type == "TM"))
-contingency_table <- as.table(as.matrix(contingency_table[,2:3]))
+    summarise(short = sum(window_length < 13),
+              long = sum(window_length >= 13)) 
+
+contingency_table_length <- as.table(as.matrix(contingency_df_length[,2:3]))
+
+# make table pretty for display
+names(dimnames(contingency_table_length)) <- c("Experimental label", "Helix length")
+rownames(contingency_table_length) <- c("Sec63", "SRP")
+# For a two-way table, mosaic() fits a model of independence, [A][B] or ~A+B as an R formula
+# https://www.datavis.ca/courses/VCD/vcd-tutorial.pdf
+ScHydropathy_contingency_plot_length <- as.grob(~vcd::mosaic(contingency_table_length, shade = TRUE, legend = TRUE, main = "Verified SP/TM regions vs Phobius predictions"))
+
+
+# Contingency table of SP/TM regions predicted by phobius
+# and those verified experimentally
 
 # run chi-squared independence test and extract p-value
 # the null hypothesis is that the two categorical variables are independent
 # the p-value rejects this, so there is a high association between the phobius label and the experimental label
-test <- chisq.test(contingency_table)
-p_value <- test$p.value
+test_length <- chisq.test(contingency_table_length)
+p_value_length <- test_length$p.value
+p_value_length
+
+# make contingency table for display
+contingency_df_label <- verified_df %>% 
+  mutate(`Experimental label` = 
+           factor(`Experimental label`,
+                  levels = c("Sec63-dependent", "SRP-dependent"))
+  ) %>%
+  group_by(`Experimental label`) %>% 
+  summarise(SP = sum(window_type == "SP"),
+            TM = sum(window_type == "TM")) 
+
+contingency_table_label <- as.table(as.matrix(contingency_df_label[,2:3]))
 
 # make table pretty for display
-names(dimnames(contingency_table)) <- c("Experimental label", "Phobius label")
-rownames(contingency_table) <- c("SRP", "Sec63")
+names(dimnames(contingency_table_label)) <- c("Experimental label", "Phobius label")
+rownames(contingency_table_label) <- c("Sec63", "SRP")
+
+# run chi-squared independence test and extract p-value
+# the null hypothesis is that the two categorical variables are independent
+# the p-value rejects this, so there is a high association between the phobius label and the experimental label
+test_label <- chisq.test(contingency_table_label)
+p_value_label <- test_label$p.value
+
+
 
 # For a two-way table, mosaic() fits a model of independence, [A][B] or ~A+B as an R formula
 # https://www.datavis.ca/courses/VCD/vcd-tutorial.pdf
-ScHydropathy_contingency_plot <- as.grob(~vcd::mosaic(contingency_table, shade = TRUE, legend = TRUE, main = "Verified SP/TM regions vs Phobius predictions"))
+ScHydropathy_contingency_plot_label <- as.grob(~vcd::mosaic(contingency_table_label, shade = TRUE, legend = TRUE, main = "Verified SP/TM regions vs Phobius predictions"))
+
+
+
+# Plot of contingency table of compound hydropathy
+# and those verified experimentally
+
+# make contingency table for display
+contingency_df_compound <- verified_df %>% 
+  mutate(`Experimental label` = 
+           factor(`Experimental label`,
+                  levels = c("Sec63-dependent", "SRP-dependent"))
+  ) %>%
+  mutate(compound = window_length * KD_max_hydropathy) %>%
+  group_by(`Experimental label`) %>% 
+  summarise(hi = sum(compound < 40),
+            lo = sum(compound >= 40)) 
+
+contingency_table_compound <- as.table(as.matrix(contingency_df_compound[,2:3]))
+
+# make table pretty for display
+names(dimnames(contingency_table_compound)) <- c("Experimental label", "Compound hydropathy")
+rownames(contingency_table_compound) <- c("Sec63", "SRP")
+
+# For a two-way table, mosaic() fits a model of independence, [A][B] or ~A+B as an R formula
+# https://www.datavis.ca/courses/VCD/vcd-tutorial.pdf
+ScHydropathy_contingency_plot_compound <- as.grob(~vcd::mosaic(contingency_table_compound, shade = TRUE, legend = TRUE, main = "Verified SP/TM regions vs Phobius predictions"))
+
+# run chi-squared independence test and extract p-value
+# the null hypothesis is that the two categorical variables are independent
+# the p-value rejects this, so there is a high association between the phobius label and the experimental label
+test_compound <- chisq.test(contingency_table_compound)
+p_value_compound <- test_compound$p.value
+p_value_compound
+
 
 
 # Scatter plot of all proteins with SP/TM regions found by phobius
@@ -163,15 +235,20 @@ ScHydropathy_scatter_marginals_plot <-
             ncol = 2,
             align = "hv",
             axis = "bl",
-            rel_heights = c(0.55, 1),
-            rel_widths = c(1, 0.65)
+            rel_heights = c(0.6, 1),
+            rel_widths = c(1, 0.75)
   )
 ScHydropathy_scatter_marginals_plot
 
+# save plot
 ggsave(filename = here("results", "figures", "ScHydropathy_scatter_marginals_KD.pdf"), 
        plot = ScHydropathy_scatter_marginals_plot, 
-       width = 7, height = 6, dpi = 300)
+       width = 6.5, height = 5.5, dpi = 300)
 
+# save plot as .png for google docs input
+ggsave(filename = here("results", "figures", "ScHydropathy_scatter_marginals_KD.png"), 
+       plot = ScHydropathy_scatter_marginals_plot, 
+       width = 6.5, height = 5.5, dpi = 300)
 
 # combine figures into grid - not yet done
 # Fig_1 <- plot_grid(Fig_1A, Fig_1B, Fig_1C, Fig_1D, labels = c("A", "B", "C", "D"), ncol = 2, nrow = 2)
@@ -240,6 +317,10 @@ phobius_plot <-
 
 # save 
 ggsave(filename = here("results", "figures", "phobius_helix_length.pdf"),
+       plot = phobius_plot, 
+       width = 5, height = 8)
+
+ggsave(filename = here("results", "figures", "phobius_helix_length.png"),
        plot = phobius_plot, 
        width = 5, height = 8)
 
