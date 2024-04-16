@@ -328,7 +328,7 @@ ggsave(filename = here("results", "figures", "phobius_helix_length.png"),
 # Figure 3 - DeepTMHMM
 
 # read string of here/results/proteins/SC_deeptmhmm/predicted_topologies.3line
-deeptmhmm <- read_file(here("results", "proteins", "SC_deeptmhmm", "predicted_topologies.3line"))
+deeptmhmm <- read_file(here("results", "deepTMHMM", "S_Cerevisiae", "predicted_topologies.3line"))
 proteins <- strsplit(deeptmhmm, ">")[[1]]
 
 deep_df <- data.frame(seqid = character(),
@@ -432,6 +432,7 @@ model <- normalmixEM(model_df$window_length, k = 2)
 plot(model, which = 2)
 
 labelled_df <- plot_df %>% 
+    mutate(seqid = str_sub(seqid, end=-7)) %>%
     mutate(`Experimental label` = case_when(seqid %in% verified_non_srp ~ "Cleaved SP",
                            seqid %in% screened_non_srp ~ "Cleaved SP",
                            seqid %in% verified_srp ~ "Non-cleaved SP",
@@ -448,7 +449,7 @@ labelled_df %>%
 labelled_df %>% 
     filter(`Experimental label` != "unlabelled") %>%
     group_by(seqid) %>%
-    summarise(window_length = sum(window_length), `Experimental label` = unique(`Experimental label`)) %>%
+    reframe(window_length = sum(window_length), `Experimental label` = unique(`Experimental label`)) %>%
     ggplot(aes(x = window_length, fill = `Experimental label`, colour = `Experimental label`)) +
     geom_histogram(aes(y = after_stat(density)), bins = 100) +
     labs(x = "Window Length (AA)", y = "Density", title = "Experimental window lengths, summed if multiple, with alpha mixing") +
