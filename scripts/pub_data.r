@@ -81,3 +81,8 @@ for (i in 1:length(phobius_results)) {
     write.table(SP, file = paste(here("results", "proteins"), paste(species_names[i], "SP.txt", sep = "_"), sep = "/"), row.names = FALSE, col.names = FALSE, quote = FALSE)
     write.table(TM, file = paste(here("results", "proteins"), paste(species_names[i], "TM.txt", sep = "_"), sep = "/"), row.names = FALSE, col.names = FALSE, quote = FALSE)
 }
+
+# --- Run S_Cerevisiae through Phobius but full length results --- #
+
+# run phobius
+full_results <- run_phobius(here("data", "Proteins", "pub", "S_Cerevisiae.fasta"), fullSignal = TRUE)

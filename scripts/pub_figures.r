@@ -333,125 +333,122 @@ proteins <- strsplit(deeptmhmm, ">")[[1]]
 
 deep_df <- data.frame(seqid = character(),
                       window_type = character(),
-                      window_length = numeric(),
-                      protein_type = character())
+                      window_length = numeric())
 
+# extract SP and TM regions, within first 60 AA
 for (i in 2:length(proteins)) {
+    # split 3line into array of strings
     protein_str <- proteins[i]
     protein_arr <- str_split(protein_str, "\n")[[1]]
 
+    # extract protein details
     details <- str_split(protein_arr[1], " ")[[1]]
     seqid <- details[1]
     window_type <- details[3]
 
+    # skip proteins that are not TM or SP
     if (window_type == "GLOB") {
         next
     }
 
-    topology_string <- protein_arr[3]
-
     # split topology string into groups of same characters
+    topology_string <- protein_arr[3]
     topology_groups <- strsplit(topology_string, "(?<=(.))(?!\\1)", perl = TRUE)[[1]]
 
-    if (window_type == "SP") {
-        for (j in seq_along(topology_groups)) {
-            if (substr(topology_groups[j], 1, 1) == "S") {
-                new_row <- data.frame(seqid = seqid, window_type = window_type, window_length = str_length(topology_groups[j]), protein_type = "SP")
-                deep_df <- rbind(deep_df, new_row)
-            }
+    # find end positions and filter for those <= 60 AA
+    end_positions <- cumsum(lapply(topology_groups, str_length))
+    topology_groups <- topology_groups[end_positions <= 60]
+
+    # populate dataframes with regions
+    SP_seqid_list <- c()
+    for (j in seq_along(topology_groups)) {
+        if (substr(topology_groups[j], 1, 1) == "S") {
+            new_row <- data.frame(seqid = seqid, window_type = "SP", window_length = str_length(topology_groups[j]))
+            deep_df <- rbind(deep_df, new_row)
+            break
+        } 
+        else if (substr(topology_groups[j], 1, 1) == "M") {
+            new_row <- data.frame(seqid = seqid, window_type = "TM", window_length = str_length(topology_groups[j]))
+            deep_df <- rbind(deep_df, new_row)
+            break
         }
-    } else if (window_type == "TM") {
-        for (j in seq_along(topology_groups)) {
-			if (substr(topology_groups[j], 1, 1) == "M") {
-				new_row <- data.frame(seqid = seqid, window_type = window_type, window_length = str_length(topology_groups[j]), protein_type = "TM")
-                deep_df <- rbind(deep_df, new_row)
-			}
-		}
-	} else if (window_type == "SP+TM") {
-		for (j in seq_along(topology_groups)) {
-			if (substr(topology_groups[j], 1, 1) == "S") {
-				new_row <- data.frame(seqid = seqid, window_type = "SP", window_length = str_length(topology_groups[j]), protein_type = "SP+TM")
-                deep_df <- rbind(deep_df, new_row)
-			} 
-            else if (substr(topology_groups[j], 1, 1) == "M") {
-				new_row <- data.frame(seqid = seqid, window_type = "TM", window_length = str_length(topology_groups[j]), protein_type = "SP+TM")
-                deep_df <- rbind(deep_df, new_row)
-		    }
-		}
-	}
+    }
 }
 
-plot_df <- deep_df %>% 
-    mutate(window_length = window_length - 1) %>%
-    mutate(`SP_&_TM` = ifelse(protein_type == "SP+TM", "SP and TM", "SP or TM"))
-
-plot_df %>%
-    ggplot(aes(x = window_length, fill = window_type)) + 
-    geom_histogram(aes(y = after_stat(density)), bins = 100) + 
-    labs(x = "Window Length (AA)", y = "Density", title = "DeepTMHMM window lengths") +
-    scale_x_continuous(breaks = seq(0, 60, 10))
-
-plot_df %>%
-    ggplot(aes(x = window_length, fill = window_type)) + 
-    geom_histogram(aes(y = after_stat(density)), bins = 100) + 
-    facet_wrap(~`SP_&_TM`, scales = "free_y", ncol = 1) +
-    labs(x = "Window Length (AA)", y = "Density", title = "DeepTMHMM window lengths, split into both or either SP and TM") +
-    scale_x_continuous(breaks = seq(0, 60, 10))
-
-plot_df %>%
-    group_by(seqid, window_type) %>% 
-    summarise(window_length = sum(window_length), `SP_&_TM` = unique(`SP_&_TM`)) %>% 
-    ggplot(aes(x = window_length, fill = window_type)) +
-    geom_histogram(aes(y = after_stat(density)), bins = 100) +
-    facet_wrap(~`SP_&_TM`, scales = "free_y", ncol = 1) +
-    labs(x = "Window Length (AA)", y = "Density", title = "DeepTMHMM window lengths, split into both or either SP and TM, summed if multiple") +
-    scale_x_continuous(breaks = seq(0, 60, 10))
-
-plot_df %>%
-    group_by(seqid, window_type) %>% 
-    summarise(window_length = sum(window_length), `SP_&_TM` = unique(`SP_&_TM`)) %>% 
-    ggplot(aes(x = window_length, fill = window_type)) +
-    geom_histogram(aes(y = after_stat(density)), bins = 100) +
-    labs(x = "Window Length (AA)", y = "Density", title = "DeepTMHMM window lengths, summed if multiple") +
-    scale_x_continuous(breaks = seq(0, 60, 10))
-
-plot_df %>%
-    group_by(seqid, window_type) %>% 
-    summarise(window_length = sum(window_length), `SP_&_TM` = unique(`SP_&_TM`)) %>% 
-    ggplot(aes(x = window_length, fill = window_type, colour = window_type)) +
-    geom_histogram(aes(y = after_stat(density), alpha = 0.9), bins = 100, position = "identity") +
-    labs(x = "Window Length (AA)", y = "Density", title = "DeepTMHMM window lengths, summed if multiple, with alpha mixing") +
-    scale_x_continuous(breaks = seq(0, 60, 10))
-
-model_df <- plot_df %>%
-    group_by(seqid, window_type) %>% 
-    summarise(window_length = sum(window_length), `SP_&_TM` = unique(`SP_&_TM`))
-
-library(mixtools)
-model <- normalmixEM(model_df$window_length, k = 2)
-plot(model, which = 2)
-
-labelled_df <- plot_df %>% 
-    mutate(seqid = str_sub(seqid, end=-7)) %>%
+labelled_df <- deep_df %>% 
+    mutate(seqid = str_sub(seqid, end = -7)) %>%
+    mutate(method = "DeepTMHMM") %>%
     mutate(`Experimental label` = case_when(seqid %in% verified_non_srp ~ "Cleaved SP",
                            seqid %in% screened_non_srp ~ "Cleaved SP",
                            seqid %in% verified_srp ~ "Non-cleaved SP",
                            TRUE ~ "unlabelled"))
+verified_df <- labelled_df %>% 
+    filter(`Experimental label` != "unlabelled")
 
-labelled_df %>% 
-    group_by(seqid) %>% 
-    summarise(window_length = sum(window_length), `Experimental label` = unique(`Experimental label`)) %>% 
-    ggplot(aes(x = window_length, fill = `Experimental label`, colour = `Experimental label`)) +
-    geom_histogram(aes(y = after_stat(density), alpha = 0.9), bins = 100, position = "identity") +
-    labs(x = "Window Length (AA)", y = "Density", title = "Experimental window lengths, summed if multiple, with alpha mixing") +
-    scale_x_continuous(breaks = seq(0, 60, 10))
+# histogram of lengths binned by experimental label
+ggplot(labelled_df, aes(x = window_length, fill = `Experimental label`)) + 
+    geom_histogram(binwidth = 1, center = 0) + 
+    facet_wrap(~`Experimental label`, scales = "free_y", ncol = 1, 
+               strip.position = "right") + 
+    labs(y = "Number of proteins") + 
+    scale_fill_manual("Experimental label", 
+                      values = c("Cleaved SP" = "blue", "Non-cleaved SP" = "red")) + 
+    theme(legend.position = "bottom", 
+          strip.text.y.right = element_text(face = "italic", angle = 0))
 
-labelled_df %>% 
-    filter(`Experimental label` != "unlabelled") %>%
-    group_by(seqid) %>%
-    reframe(window_length = sum(window_length), `Experimental label` = unique(`Experimental label`)) %>%
-    ggplot(aes(x = window_length, fill = `Experimental label`, colour = `Experimental label`)) +
-    geom_histogram(aes(y = after_stat(density)), bins = 100) +
-    labs(x = "Window Length (AA)", y = "Density", title = "Experimental window lengths, summed if multiple, with alpha mixing") +
-    scale_x_continuous(breaks = seq(0, 60, 10))
+# --- Comparing to phobius ---#
 
+# read full length phobius results
+full_phobius <- read_csv(here("results", "phobius", "S_Cerevisiae_fullSignal.csv")) %>% 
+    filter(phobius_end != 0) %>%
+    mutate(window_length = phobius_end - phobius_start) %>% 
+    mutate(window_type = phobius_type) %>% 
+    select(seqid, window_type, window_length) %>% 
+    mutate(method = "Phobius")
+
+labelled_phobius <- full_phobius %>% 
+    mutate(`Experimental label` = case_when(seqid %in% verified_non_srp ~ "Cleaved SP",
+                           seqid %in% screened_non_srp ~ "Cleaved SP",
+                           seqid %in% verified_srp ~ "Non-cleaved SP",
+                           TRUE ~ "unlabelled"))
+verified_phobius <- labelled_phobius %>%
+    filter(`Experimental label` != "unlabelled")
+
+# verified proteins by classification method
+combined_verified <- rbind(verified_df, verified_phobius)
+
+ggplot(combined_verified, aes(x = window_length, fill = `Experimental label`)) + 
+    geom_histogram(aes(y = after_stat(density)),binwidth = 1, center = 0) + 
+    facet_wrap(~method, scales = "free_y", ncol = 1, 
+               strip.position = "right") +
+    labs(y = "Number of proteins") +
+    scale_fill_manual("Experimental label", 
+                      values = c("Cleaved SP" = "blue", "Non-cleaved SP" = "red")) +
+    theme(legend.position = "bottom",
+            strip.text.y.right = element_text(face = "italic", angle = 0))
+
+# contingency table of verified proteins by classification method
+combined_labelled <- rbind(labelled_df, labelled_phobius)
+
+match_frequencies <- combined_labelled %>%
+    select(seqid, method, window_type) %>% 
+    pivot_wider(names_from = method, values_from = window_type, values_fill = "No prediction") %>% 
+    group_by(DeepTMHMM, Phobius) %>%
+    summarise(count = n()) %>%
+    ungroup()
+
+contingency_table <- match_frequencies %>% 
+    pivot_wider(names_from = Phobius, values_from = count, values_fill = 0)
+
+contingency_table <- data.frame(DeepTMHMM = contingency_table$DeepTMHMM,
+                                `No prediction` = contingency_table$`No prediction`,
+                                SP = contingency_table$SP,
+                                TM = contingency_table$TM)
+
+# run chi-squared independence test and extract p-value
+chisq.test(as.matrix(contingency_table[,2:4]))
+
+# GOF test on lengths, expected: method = Phobius
+binned_lengths <- combined_labelled %>% 
+    group_by(method, window_length) %>% 
+    summarise(count = n())
