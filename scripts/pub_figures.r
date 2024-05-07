@@ -6,6 +6,7 @@
 ###
 
 library(here)
+library(kableExtra)
 library(tidyverse)
 library(cowplot)
 library(ggExtra)
@@ -390,7 +391,7 @@ ggplot(labelled_df, aes(x = window_length, fill = `Experimental label`)) +
     geom_histogram(binwidth = 1, center = 0) + 
     facet_wrap(~`Experimental label`, scales = "free_y", ncol = 1, 
                strip.position = "right") + 
-    labs(y = "Number of proteins") + 
+    labs(y = "Number of proteins", title = "Lengths of SP/TM regions predicted by DeepTMHMM, coloured by experimental validation") + 
     scale_fill_manual("Experimental label", 
                       values = c("Cleaved SP" = "blue", "Non-cleaved SP" = "red")) + 
     theme(legend.position = "bottom", 
@@ -417,11 +418,11 @@ verified_phobius <- labelled_phobius %>%
 # verified proteins by classification method
 combined_verified <- rbind(verified_df, verified_phobius)
 
-ggplot(combined_verified, aes(x = window_length, fill = `Experimental label`)) + 
-    geom_histogram(aes(y = after_stat(density)),binwidth = 1, center = 0) + 
-    facet_wrap(~method, scales = "free_y", ncol = 1, 
+ggplot(combined_verified, aes(x = window_length, colour = method)) + 
+    geom_histogram(aes(y = after_stat(density)), binwidth = 1, center = 0) + 
+    facet_wrap(~`Experimental label`, scales = "free_y", ncol = 1, 
                strip.position = "right") +
-    labs(y = "Number of proteins") +
+    labs(y = "Number of proteins", title = "Lengths of Experimentally validated SP/TM regions, coloured by prediction method") +
     scale_fill_manual("Experimental label", 
                       values = c("Cleaved SP" = "blue", "Non-cleaved SP" = "red")) +
     theme(legend.position = "bottom",
@@ -443,12 +444,10 @@ contingency_table <- match_frequencies %>%
 contingency_table <- data.frame(DeepTMHMM = contingency_table$DeepTMHMM,
                                 `No prediction` = contingency_table$`No prediction`,
                                 SP = contingency_table$SP,
-                                TM = contingency_table$TM)
+                                TM = contingency_table$TM) %>% 
+    column_to_rownames("DeepTMHMM")
+
+knitr::kable(contingency_table, caption = "Contingency table of SP/TM regions predicted by DeepTMHMM and Phobius", format = "simple")
 
 # run chi-squared independence test and extract p-value
-chisq.test(as.matrix(contingency_table[,2:4]))
-
-# GOF test on lengths, expected: method = Phobius
-binned_lengths <- combined_labelled %>% 
-    group_by(method, window_length) %>% 
-    summarise(count = n())
+chisq.test(as.matrix(contingency_table[,1:3]))
