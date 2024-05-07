@@ -35,7 +35,7 @@ phobius_results <- lapply(protein_paths, run_phobius)
 for (i in 1:length(phobius_results)) {
     phobius_results[[i]] <- phobius_results[[i]] %>% 
         filter(phobius_end != 0) %>%
-        mutate(window_length = phobius_end - phobius_start) %>% 
+        mutate(window_length = phobius_end - phobius_start + 1) %>% 
         mutate(species = species_names[i])
 }
 

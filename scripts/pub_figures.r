@@ -295,7 +295,7 @@ phobius_results <- lapply(protein_paths, read_phobius)
 for (i in 1:length(phobius_results)) {
     phobius_results[[i]] <- phobius_results[[i]] %>% 
         filter(phobius_end != 0) %>%
-        mutate(window_length = phobius_end - phobius_start) %>% 
+        mutate(window_length = phobius_end - phobius_start + 1) %>% 
         mutate(species = species_df$Nicename_splitline[i])
 }
 
@@ -407,7 +407,7 @@ ggsave(filename = here("results", "figures", "DeepTMHMM_predictions.png"),
 # read full length phobius results
 full_phobius <- read_csv(here("results", "phobius", "S_Cerevisiae_fullSignal.csv")) %>% 
     filter(phobius_end != 0) %>%
-    mutate(window_length = phobius_end - phobius_start) %>% 
+    mutate(window_length = phobius_end - phobius_start + 1) %>% 
     mutate(window_type = phobius_type) %>% 
     select(seqid, window_type, window_length) %>% 
     mutate(method = "Phobius")
