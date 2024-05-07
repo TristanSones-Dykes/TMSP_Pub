@@ -3,10 +3,9 @@
 Protein sequences. Contained in this file:
 
  - Full length protein files, specifically those that have been run through DeepTMHMM (full/)
- - Subset length proteins used in tool comparison (first_60/)
- - Proteomes used in figure generation, filtered to initial 60 amino acids (pub/)
+ - Proteomes used in figure generation and Phobius analysis, filtered to initial 60 amino acids (pub/)
  
-# pub/
+## pub/
 
 These were downloaded from FungiDB in December 2023.
 Species names and identifiers are also shown in `pub/proteome_table.txt`

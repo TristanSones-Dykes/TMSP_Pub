@@ -21,19 +21,9 @@ See README files in individual directories for details.
 
 Input data used for analysis.
 
-- `Proteins` - Protein sequences in .fasta format.
-- Lists of S. cerevisiae genes that use known secretion pathways in .txt format
-- Hydrophobicity scales for amino acids in .csv format.
-
 ## results
 
-All results of data analysis.
-
-- Signal peptide and transmembrane region predictions by Phobius, in a variety of data formats
-- Signal peptide and transmembrane region predictions by DeepTMHMM, in a variety of data formats
-- Reports of data analysis in .html format
-- Figures produced by data analysis
-
+All results of data analysis and figures/reports generated.
 
 ## scripts
 
