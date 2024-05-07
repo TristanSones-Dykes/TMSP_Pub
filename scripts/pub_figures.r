@@ -6,7 +6,6 @@
 ###
 
 library(here)
-library(kableExtra)
 library(tidyverse)
 library(cowplot)
 library(ggExtra)
@@ -387,13 +386,14 @@ verified_df <- labelled_df %>%
     filter(`Experimental label` != "unlabelled")
 
 # histogram of lengths binned by experimental label
-ggplot(labelled_df, aes(x = window_length, fill = `Experimental label`)) + 
+ggplot(labelled_df %>% mutate(`DeepTMHMM prediction` = window_type),
+        aes(x = window_length, fill = `DeepTMHMM prediction`)) + 
     geom_histogram(binwidth = 1, center = 0) + 
     facet_wrap(~`Experimental label`, scales = "free_y", ncol = 1, 
                strip.position = "right") + 
-    labs(y = "Number of proteins", title = "Lengths of SP/TM regions predicted by DeepTMHMM, coloured by experimental validation") + 
-    scale_fill_manual("Experimental label", 
-                      values = c("Cleaved SP" = "blue", "Non-cleaved SP" = "red")) + 
+    labs(y = "Number of proteins", title = "Lengths of SP/TM regions verified experimentally, coloured by DeepTMHMM prediction") + 
+    scale_fill_manual("DeepTMHMM prediction", 
+                      values = c("SP" = "blue", "TM" = "red")) + 
     theme(legend.position = "bottom", 
           strip.text.y.right = element_text(face = "italic", angle = 0))
 
