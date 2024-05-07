@@ -386,7 +386,7 @@ verified_df <- labelled_df %>%
     filter(`Experimental label` != "unlabelled")
 
 # histogram of lengths binned by experimental label
-ggplot(labelled_df %>% mutate(`DeepTMHMM prediction` = window_type),
+DeepTMHMM_predictions_plot <- ggplot(labelled_df %>% mutate(`DeepTMHMM prediction` = window_type),
         aes(x = window_length, fill = `DeepTMHMM prediction`)) + 
     geom_histogram(binwidth = 1, center = 0) + 
     facet_wrap(~`Experimental label`, scales = "free_y", ncol = 1, 
@@ -396,6 +396,11 @@ ggplot(labelled_df %>% mutate(`DeepTMHMM prediction` = window_type),
                       values = c("SP" = "blue", "TM" = "red")) + 
     theme(legend.position = "bottom", 
           strip.text.y.right = element_text(face = "italic", angle = 0))
+
+# save plot
+ggsave(filename = here("results", "figures", "DeepTMHMM_predictions.png"), 
+       plot = DeepTMHMM_predictions_plot, 
+       width = 8, height = 5)
 
 # --- Comparing to phobius ---#
 
@@ -418,7 +423,7 @@ verified_phobius <- labelled_phobius %>%
 # verified proteins by classification method
 combined_verified <- rbind(verified_df, verified_phobius)
 
-ggplot(combined_verified, aes(x = window_length, colour = method)) + 
+DeepTMHMM_Phobius_comparison_plot <- ggplot(combined_verified, aes(x = window_length, colour = method)) + 
     geom_histogram(aes(y = after_stat(density)), binwidth = 1, center = 0) + 
     facet_wrap(~`Experimental label`, scales = "free_y", ncol = 1, 
                strip.position = "right") +
@@ -427,6 +432,11 @@ ggplot(combined_verified, aes(x = window_length, colour = method)) +
                       values = c("Cleaved SP" = "blue", "Non-cleaved SP" = "red")) +
     theme(legend.position = "bottom",
             strip.text.y.right = element_text(face = "italic", angle = 0))
+
+# save plot
+ggsave(filename = here("results", "figures", "DeepTMHMM_Phobius_comparison.png"), 
+       plot = DeepTMHMM_Phobius_comparison_plot, 
+       width =8, height = 5)
 
 # contingency table of verified proteins by classification method
 combined_labelled <- rbind(labelled_df, labelled_phobius)
