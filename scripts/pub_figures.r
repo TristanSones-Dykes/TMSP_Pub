@@ -461,7 +461,7 @@ knitr::kable(contingency_table, caption = "Contingency table of SP/TM regions pr
 
 # scatter of predicted lengths by method, coloured by label match
 require(tune)
-combined_labelled %>% 
+label_match_df <- combined_labelled %>% 
     select(seqid, method, window_length, window_type) %>% 
     group_by(seqid) %>%
     pivot_wider(names_from = method, values_from = c(window_length, window_type)) %>%
@@ -469,34 +469,51 @@ combined_labelled %>%
     mutate(label_prediction = case_when(window_type_DeepTMHMM == window_type_Phobius ~ "Match",
                              TRUE ~ "Mismatch")) %>%
     ungroup() %>%
-    select(Phobius = window_length_Phobius, DeepTMHMM = window_length_DeepTMHMM, label_prediction) %>%
+    select(Phobius = window_length_Phobius, DeepTMHMM = window_length_DeepTMHMM, label_prediction)
+
+matching_spearman <- label_match_df %>% 
+    filter(label_prediction == "Match") %>%
+    select(Phobius, DeepTMHMM) %>%
+    cor(method = "spearman")
+
+all_spearman <- cor(label_match_df$Phobius, label_match_df$DeepTMHMM, method = "spearman")
+
+label_match_df %>%
     group_by(Phobius, DeepTMHMM, label_prediction) %>%
     summarise(count = n()) %>%
     ggplot(aes(x = Phobius, y = DeepTMHMM, size = count, colour = label_prediction)) +
     geom_point() +
     labs(x = "Phobius predicted length", y = "DeepTMHMM predicted length",
-            title = "Phobius vs DeepTMHMM predicted lengths of all proteins, coloured by if their label predictions match") +
+            title = "Phobius vs DeepTMHMM predicted lengths of all S. Cerevisiae proteins, \ncoloured by if their label predictions match") +
     scale_color_manual(values = c("Match" = "green", "Mismatch" = "red")) +
     geom_abline(intercept = 0, slope = 1) + 
-    tune::coord_obs_pred()
+    tune::coord_obs_pred() + 
+    geom_text(inherit.aes = FALSE, x = 48, y = 28, label = paste("Spearman correlation (all):", round(all_spearman, 2)), show.legend = FALSE) +
+    geom_text(inherit.aes = FALSE, x = 50, y = 30, label = paste("Spearman correlation (matching):", round(matching_spearman[2], 2)), show.legend = FALSE, colour = "green")
 
 # scatter of predicted lengths by method, coloured by experimental label
-combined_labelled %>% 
+experimental_match_df <- combined_labelled %>% 
     select(seqid, method, window_length, `Experimental label`) %>%
     filter(`Experimental label` != "unlabelled") %>%
     group_by(seqid) %>%
     pivot_wider(names_from = method, values_from = window_length) %>%
     drop_na() %>% 
-    ungroup() %>%
+    ungroup()
+
+experimental_spearman <- cor(experimental_match_df$Phobius, experimental_match_df$DeepTMHMM, method = "spearman")
+
+experimental_match_df %>%
     group_by(Phobius, DeepTMHMM, `Experimental label`) %>%
     summarise(count = n()) %>%
     ggplot(aes(x = Phobius, y = DeepTMHMM, colour = `Experimental label`, size = count)) +
     geom_point() +
     labs(x = "Phobius predicted length", y = "DeepTMHMM predicted length",
-            title = "Phobius vs DeepTMHMM predicted lengths of experimentally verified, coloured by experimental label") +
+            title = "Phobius vs DeepTMHMM predicted lengths of experimentally verified S. Cerevisiae proteins, \ncoloured by experimental label") +
     scale_color_manual(values = c("Cleaved SP" = "blue", "Non-cleaved SP" = "red")) +
     geom_abline(intercept = 0, slope = 1) +
-    tune::coord_obs_pred()
-
+    tune::coord_obs_pred() + 
+    geom_text(inherit.aes = FALSE, x = 48, y = 28, label = paste("Spearman correlation:", round(experimental_spearman, 2)), show.legend = FALSE)
+    
 # run chi-squared independence test and extract p-value
 chisq.test(as.matrix(contingency_table[,1:3]))
+
