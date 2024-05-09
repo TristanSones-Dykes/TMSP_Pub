@@ -2,15 +2,11 @@
 ################################################################################
 ##
 ## This script demonstrates the following workflow:
-##
-##   1. Search for genes based on Gene IDs
-##   2. Perform a GO Enrichment Analysis on the search result
-##   3. Download the analysis result as a tabular file
-##
-################################################################################
-##
-##  Configuration values below can be modified inline, or you may wish to edit
-##  this script to make these parameters or read from environment variables.
+##      
+##   1. Parse CLAs and read Gene IDs from a file
+##   2. Search for genes based on Gene IDs
+##   3. Perform a GO Enrichment Analysis on the search result
+##   4. Download the analysis result as a tabular file
 ##
 ################################################################################
 
