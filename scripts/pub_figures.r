@@ -303,9 +303,51 @@ for (i in 1:length(phobius_results)) {
 phobius_df <- do.call(rbind, phobius_results)
 rownames(phobius_df) <- NULL
 
+# get GO analysis values
+species_file_names <- lapply(species_df$Filename, function(x) gsub(".fasta", "", x))
+
+GO_df <- data.frame(species = character(),
+                    prediction = character(),
+                    GO_term = character(),
+                    p_value = numeric())
+for (species_file in species_file_names) {
+    for (prediction in c("SP", "TM")) {
+        prediction_file <- paste(species_file, prediction, sep = "_")
+        path <- here("results", "GO", prediction_file, "goEnrichmentResult.tsv")
+        
+        # get lowest p-value GO term
+        go_df <- read_tsv(path)
+        go_df <- go_df %>% 
+            filter(`P-value` == min(`P-value`))
+
+        GO_df <- rbind(GO_df, 
+                               data.frame(species = species_file,
+                                          prediction = prediction,
+                                          GO_term = go_df$Name,
+                                          p_value = go_df$`P-value`))
+    }
+}
+
+# modes for label positions
+sub_figure_heights <- phobius_df %>% 
+    filter(window_length == 12) %>%
+    group_by(species) %>% 
+    summarise(height = n())
+
+# create a dataframe with species, prediction, GO term and p-value
+GO_df <- species_df %>% 
+    mutate(Filename = gsub(".fasta", "", Filename)) %>% 
+    left_join(GO_df, by = c("Filename" = "species")) %>% 
+    select(species = Nicename_splitline, prediction, GO_term, p_value) %>% 
+    mutate(pred_substr = paste(prediction, ": ", GO_term, sep = "")) %>%
+    group_by(species) %>%
+    summarise(GO_term = paste(pred_substr, collapse = "\n")) %>% 
+    left_join(sub_figure_heights, by = c("species" = "species"))
+
 phobius_plot <- 
   ggplot(phobius_df, aes(x = window_length, fill = phobius_type)) + 
   geom_histogram(binwidth = 1, center = 0) + 
+  geom_label(data = GO_df, aes(x = 28, y = height %/% 1.5, label = GO_term), inherit.aes = FALSE, show.legend = FALSE) +
   facet_wrap(~species, scales = "free_y", ncol = 1, 
              strip.position = "right") + 
   labs(y = "Number of proteins") + 
