@@ -38,8 +38,8 @@ verified_df <- labelled_df %>%
 
 # plot helix length axis
 lower <- 5 
-upper <- 33
-helix_delim <- seq(lower, upper, 10)
+upper <- 34
+helix_delim <- seq(lower, upper, 5)
 helix_minor <- seq(lower, upper, 5)
 helix_limits <- c(lower, upper)
 scale_x_helix_length <- 
@@ -72,8 +72,8 @@ contingency_df_length <- verified_df %>%
                   levels = c("Sec63-dependent", "SRP-dependent"))
     ) %>%
     group_by(`Experimental label`) %>% 
-    summarise(short = sum(window_length < 13),
-              long = sum(window_length >= 13)) 
+    summarise(short = sum(window_length < 14),
+              long = sum(window_length >= 14)) 
 
 contingency_table_length <- as.table(as.matrix(contingency_df_length[,2:3]))
 
@@ -171,12 +171,19 @@ size_explabel <- c("Sec63-dependent" = 1.5,
                    "SRP-dependent" = 1.5,
                    "Unverified" = 0.5)
 
+compound_hydropathy_40linedf <-
+  tibble(window_length = seq(4,34, 0.2),
+         KD_max_hydropathy = 40 / window_length)
+
 base_ScScatMarg <- 
-  ggplot(labelled_df, aes(x = window_length, y = KD_max_hydropathy, 
-                                   colour = `Experimental label`, 
-                                   group = `Experimental label`,
-                                   size  = `Experimental label`)) +
-  geom_point() + 
+  ggplot(labelled_df, aes(x = window_length, 
+                          y = KD_max_hydropathy)) +
+  geom_point(aes(colour = `Experimental label`, 
+                 group  = `Experimental label`,
+                 size   = `Experimental label`)) + 
+  geom_vline(xintercept = 13.5, linetype = "dashed") + 
+  geom_line(data = compound_hydropathy_40linedf,
+            linetype = "dotted") + 
   # ggtitle("Phobius detected SP/TM regions") + 
   scale_x_helix_length +
   scale_y_KD_hydropathy + 
@@ -215,6 +222,7 @@ top_ScScatMarg <- ggplot(labelled_df %>%
                      fill = `Experimental label`, 
                      group = `Experimental label`)) +
   geom_histogram(binwidth = 1) +
+  geom_vline(xintercept = 13.5, linetype = "dashed") + 
   scale_x_helix_length + 
   scale_fill_manual(values = colour_explabel) +
   facet_grid(`Experimental label` ~., scales = "free_y") +
