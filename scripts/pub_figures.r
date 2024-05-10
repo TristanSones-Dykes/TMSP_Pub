@@ -347,7 +347,7 @@ GO_df <- species_df %>%
 phobius_plot <- 
   ggplot(phobius_df, aes(x = window_length, fill = phobius_type)) + 
   geom_histogram(binwidth = 1, center = 0) + 
-  geom_label(data = GO_df, aes(x = 28, y = height %/% 1.5, label = GO_term), inherit.aes = FALSE, show.legend = FALSE) +
+  geom_label(data = GO_df, aes(x = 28, y = height %/% 1.5, label = GO_term), size = 1.6, inherit.aes = FALSE, show.legend = FALSE) +
   facet_wrap(~species, scales = "free_y", ncol = 1, 
              strip.position = "right") + 
   labs(y = "Number of proteins") + 
