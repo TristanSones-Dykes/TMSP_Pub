@@ -86,3 +86,20 @@ for (i in 1:length(phobius_results)) {
 
 # run phobius
 full_results <- run_phobius(here("data", "Proteins", "pub", "S_Cerevisiae.fasta"), fullSignal = TRUE)
+
+# --- GO Analysis using fungidb --- #
+
+for (i in seq_len(dim(species_df)[1])) {
+    species_tax <- species_df$FungiDB_id[i]
+    species_name <- species_df$Nicename[i]
+    output_file <- str_split(species_df$Filename[i], "\\.")[[1]][1]
+
+    for (type in c("TM", "SP")) {
+        input_file <- here("results", "proteins", paste(species_name, paste(type, ".txt", sep=""), sep = "_"))
+        output_dir <- here("results", "GO", paste(output_file, type, sep = "_"))
+
+        cat(paste("Running GO analysis for", species_name, type, "proteins:\n"))
+        system(paste("sh", here("src", "GO_analysis.sh"), "-t", paste("'", species_tax, "'", sep = ""), "-i", paste("'", input_file, "'", sep=""), "-o", output_dir))
+        cat("-----------------------------------\n\n")
+    }
+}

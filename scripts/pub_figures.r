@@ -311,9 +311,51 @@ for (i in 1:length(phobius_results)) {
 phobius_df <- do.call(rbind, phobius_results)
 rownames(phobius_df) <- NULL
 
+# get GO analysis values
+species_file_names <- lapply(species_df$Filename, function(x) gsub(".fasta", "", x))
+
+GO_df <- data.frame(species = character(),
+                    prediction = character(),
+                    GO_term = character(),
+                    p_value = numeric())
+for (species_file in species_file_names) {
+    for (prediction in c("SP", "TM")) {
+        prediction_file <- paste(species_file, prediction, sep = "_")
+        path <- here("results", "GO", prediction_file, "goEnrichmentResult.tsv")
+        
+        # get lowest p-value GO term
+        go_df <- read_tsv(path)
+        go_df <- go_df %>% 
+            filter(`P-value` == min(`P-value`))
+
+        GO_df <- rbind(GO_df, 
+                               data.frame(species = species_file,
+                                          prediction = prediction,
+                                          GO_term = go_df$Name,
+                                          p_value = go_df$`P-value`))
+    }
+}
+
+# modes for label positions
+sub_figure_heights <- phobius_df %>% 
+    filter(window_length == 12) %>%
+    group_by(species) %>% 
+    summarise(height = n())
+
+# create a dataframe with species, prediction, GO term and p-value
+GO_df <- species_df %>% 
+    mutate(Filename = gsub(".fasta", "", Filename)) %>% 
+    left_join(GO_df, by = c("Filename" = "species")) %>% 
+    select(species = Nicename_splitline, prediction, GO_term, p_value) %>% 
+    mutate(pred_substr = paste(prediction, ": ", GO_term, sep = "")) %>%
+    group_by(species) %>%
+    summarise(GO_term = paste(pred_substr, collapse = "\n")) %>% 
+    left_join(sub_figure_heights, by = c("species" = "species"))
+
 phobius_plot <- 
   ggplot(phobius_df, aes(x = window_length, fill = phobius_type)) + 
   geom_histogram(binwidth = 1, center = 0) + 
+  geom_label(data = GO_df, aes(x = 28, y = height %/% 1.5, label = GO_term), size = 1.6, inherit.aes = FALSE, show.legend = FALSE) +
   facet_wrap(~species, scales = "free_y", ncol = 1, 
              strip.position = "right") + 
   labs(y = "Number of proteins") + 
@@ -467,5 +509,61 @@ contingency_table <- data.frame(DeepTMHMM = contingency_table$DeepTMHMM,
 
 knitr::kable(contingency_table, caption = "Contingency table of SP/TM regions predicted by DeepTMHMM and Phobius", format = "simple")
 
+# scatter of predicted lengths by method, coloured by label match
+require(tune)
+label_match_df <- combined_labelled %>% 
+    select(seqid, method, window_length, window_type) %>% 
+    group_by(seqid) %>%
+    pivot_wider(names_from = method, values_from = c(window_length, window_type)) %>%
+    drop_na() %>% 
+    mutate(label_prediction = case_when(window_type_DeepTMHMM == window_type_Phobius ~ "Match",
+                             TRUE ~ "Mismatch")) %>%
+    ungroup() %>%
+    select(Phobius = window_length_Phobius, DeepTMHMM = window_length_DeepTMHMM, label_prediction)
+
+matching_spearman <- label_match_df %>% 
+    filter(label_prediction == "Match") %>%
+    select(Phobius, DeepTMHMM) %>%
+    cor(method = "spearman")
+
+all_spearman <- cor(label_match_df$Phobius, label_match_df$DeepTMHMM, method = "spearman")
+
+label_match_df %>%
+    group_by(Phobius, DeepTMHMM, label_prediction) %>%
+    summarise(count = n()) %>%
+    ggplot(aes(x = Phobius, y = DeepTMHMM, size = count, colour = label_prediction)) +
+    geom_point() +
+    labs(x = "Phobius predicted length", y = "DeepTMHMM predicted length",
+            title = "Phobius vs DeepTMHMM predicted lengths of all S. Cerevisiae proteins, \ncoloured by if their label predictions match") +
+    scale_color_manual(values = c("Match" = "green", "Mismatch" = "red")) +
+    geom_abline(intercept = 0, slope = 1) + 
+    tune::coord_obs_pred() + 
+    geom_text(inherit.aes = FALSE, x = 48, y = 28, label = paste("Spearman correlation (all):", round(all_spearman, 2)), show.legend = FALSE) +
+    geom_text(inherit.aes = FALSE, x = 50, y = 30, label = paste("Spearman correlation (matching):", round(matching_spearman[2], 2)), show.legend = FALSE, colour = "green")
+
+# scatter of predicted lengths by method, coloured by experimental label
+experimental_match_df <- combined_labelled %>% 
+    select(seqid, method, window_length, `Experimental label`) %>%
+    filter(`Experimental label` != "unlabelled") %>%
+    group_by(seqid) %>%
+    pivot_wider(names_from = method, values_from = window_length) %>%
+    drop_na() %>% 
+    ungroup()
+
+experimental_spearman <- cor(experimental_match_df$Phobius, experimental_match_df$DeepTMHMM, method = "spearman")
+
+experimental_match_df %>%
+    group_by(Phobius, DeepTMHMM, `Experimental label`) %>%
+    summarise(count = n()) %>%
+    ggplot(aes(x = Phobius, y = DeepTMHMM, colour = `Experimental label`, size = count)) +
+    geom_point() +
+    labs(x = "Phobius predicted length", y = "DeepTMHMM predicted length",
+            title = "Phobius vs DeepTMHMM predicted lengths of experimentally verified S. Cerevisiae proteins, \ncoloured by experimental label") +
+    scale_color_manual(values = c("Cleaved SP" = "blue", "Non-cleaved SP" = "red")) +
+    geom_abline(intercept = 0, slope = 1) +
+    tune::coord_obs_pred() + 
+    geom_text(inherit.aes = FALSE, x = 48, y = 28, label = paste("Spearman correlation:", round(experimental_spearman, 2)), show.legend = FALSE)
+    
 # run chi-squared independence test and extract p-value
 chisq.test(as.matrix(contingency_table[,1:3]))
+
