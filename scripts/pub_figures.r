@@ -553,8 +553,11 @@ deepphob_lengthcor_df <-
   group_by(Phobius, DeepTMHMM) %>%
   summarise(cor_length = cor(Phobius_length, DeepTMHMM_length, 
                              use = "pairwise.complete.obs"),
+            count = n(),
             .groups = "drop") %>%
-  mutate(cor_label = paste0("R = ", round(cor_length, digits = 2)))
+  mutate(cor_label = paste0("R = ", round(cor_length, digits = 2)),
+         count_label = paste0("n = ", count),
+         both_label = paste0(count_label, "\n", cor_label))
 
 deepphob_match_df <- 
   combined_labelled %>%
@@ -570,8 +573,8 @@ deepphob_match_plot <-
   geom_point(aes(size = count), colour = "forestgreen") +
   geom_text(data = deepphob_lengthcor_df %>%
               drop_na(),
-            aes(label = cor_label),
-            x = 35, y = 60, hjust = 0, vjust = 1, size = 3,
+            aes(label = both_label),
+            x = 30, y = 60, hjust = 0, vjust = 1, size = 3,
             inherit.aes = FALSE) +
   facet_grid(DeepTMHMM ~ Phobius, labeller = label_both) +
   theme(panel.border = element_rect(fill = NA, colour = "grey90")) + 
@@ -585,3 +588,8 @@ deepphob_match_plot
 ggsave(filename = here("results", "figures", "Phobius_DeepTMHMM_length_match.pdf"), 
        plot = deepphob_match_plot, 
        width = 6.5, height = 5.5, dpi = 300)
+
+ggsave(filename = here("results", "figures", "Phobius_DeepTMHMM_length_match.png"), 
+       plot = deepphob_match_plot, 
+       width = 6.5, height = 5.5, dpi = 300)
+ 
