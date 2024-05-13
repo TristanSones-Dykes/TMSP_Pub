@@ -343,36 +343,72 @@ sub_figure_heights <- phobius_df %>%
     summarise(height = n())
 
 # create a dataframe with species, prediction, GO term and p-value
-GO_df <- species_df %>% 
+GO_summary_df <- species_df %>% 
     mutate(Filename = gsub(".fasta", "", Filename)) %>% 
     left_join(GO_df, by = c("Filename" = "species")) %>% 
     select(species = Nicename_splitline, prediction, GO_term, p_value) %>% 
     mutate(pred_substr = paste(prediction, ": ", GO_term, sep = "")) %>%
     group_by(species) %>%
     summarise(GO_term = paste(pred_substr, collapse = "\n")) %>% 
+    # shorten longest GO term for display
+    mutate(GO_term = stringr::str_remove(GO_term, pattern = "external ")) %>%
     left_join(sub_figure_heights, by = c("species" = "species"))
 
 phobius_plot <- 
   ggplot(phobius_df, aes(x = window_length, fill = phobius_type)) + 
   geom_histogram(binwidth = 1, center = 0) + 
-  geom_label(data = GO_df, aes(x = 28, y = height %/% 1.5, label = GO_term), size = 1.6, inherit.aes = FALSE, show.legend = FALSE) +
+  geom_label(data = GO_summary_df, 
+             aes(x = 28, y = height %/% 1.5, label = GO_term), 
+             size = 2, inherit.aes = FALSE, show.legend = FALSE) +
   facet_wrap(~species, scales = "free_y", ncol = 1, 
-             strip.position = "right") + 
-  labs(y = "Number of proteins") + 
+             strip.position = "left") + 
+  scale_y_continuous("Number of proteins", position = "right") + 
   scale_x_helix_length +
   scale_fill_manual("Phobius prediction", 
                     values = c("SP" = "blue", "TM" = "red")) + 
   theme(legend.position = "bottom", 
-        strip.text.y.right = element_text(face = "italic", angle = 0))
+        strip.text.y.left = element_text(face = "italic", angle = 0),
+        strip.placement = "outside")
+
+# Make fungal species tree / cladogram to inform phobius plot
+library(treeio)
+library(ggtree)
+
+# first define the tree in newick format, read in to treeio format
+fungal12tree_data <- 
+  "((((((((Sc:1,Ca:1):1,((Nc:1,Mg:1):1,(Zt:1,Af:1):1):1),Sp:1),(Pg:1,(Um:1,Cn:1):1):1):1):1,Rd:1):1,Bd:1):1);" %>%
+  textConnection() %>%
+  read.newick()
+
+# Plot the tree using ggtree.
+# ladderize = FALSE preserves input tip order.
+fungal12tree_plot <- 
+  ggtree(fungal12tree_data,
+       ladderize = FALSE) +
+  # geom_tiplab here would print the tip labels, useful for checking.
+  # geom_tiplab() +
+  scale_y_reverse()
+
+fungal12tree_plot
+
+# make composite plot, including moving the y-axis title 
+phobius_composite_plot <- 
+  plot_grid(
+    fungal12tree_plot +
+      theme(plot.margin = margin(t = 0, r = 0, b = 0.55, l = 0, unit = "in")),
+    phobius_plot,
+    nrow = 1,
+    rel_widths = c(0.2,1)) + 
+  theme(plot.background = element_rect(fill = "white", colour = NA))
 
 # save 
 ggsave(filename = here("results", "figures", "phobius_helix_length.pdf"),
-       plot = phobius_plot, 
-       width = 5, height = 8)
+       plot = phobius_composite_plot, 
+       width = 6, height = 8)
 
 ggsave(filename = here("results", "figures", "phobius_helix_length.png"),
-       plot = phobius_plot, 
-       width = 5, height = 8)
+       plot = phobius_composite_plot, 
+       width = 6, height = 8)
 
 
 # Figure 3 - DeepTMHMM
