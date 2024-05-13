@@ -359,6 +359,7 @@ GO_summary_df <- species_df %>%
 phobius_plot <- 
   ggplot(phobius_df, aes(x = window_length, fill = phobius_type)) + 
   geom_histogram(binwidth = 1, center = 0) + 
+  geom_vline(xintercept = 13.5, linetype = "dashed") +
   geom_label(data = GO_summary_df, 
              aes(x = 28, y = height %/% 1.5, label = GO_term), 
              size = 2, inherit.aes = FALSE, show.legend = FALSE) +
