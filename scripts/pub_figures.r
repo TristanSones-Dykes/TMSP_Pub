@@ -324,8 +324,10 @@ for (species_file in species_file_names) {
         path <- here("results", "GO", prediction_file, "goEnrichmentResult.tsv")
         
         # get lowest p-value GO term
+        # after removing meaningless "cellular component" 
         go_df <- read_tsv(path)
         go_df <- go_df %>% 
+            filter(Name != "cellular component") %>%
             filter(`P-value` == min(`P-value`))
 
         GO_df <- rbind(GO_df, 
@@ -336,7 +338,7 @@ for (species_file in species_file_names) {
     }
 }
 
-# modes for label positions
+# heights of histogram modes for GO label positions
 sub_figure_heights <- phobius_df %>% 
     filter(window_length == 12) %>%
     group_by(species) %>% 
