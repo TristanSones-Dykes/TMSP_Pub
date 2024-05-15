@@ -417,26 +417,31 @@ ggsave(filename = here("results", "figures", "phobius_helix_length.png"),
 # Figure 3 - DeepTMHMM
 
 # read string of here/results/proteins/SC_deeptmhmm/predicted_topologies.3line
-deeptmhmm <- read_file(here("results", "deepTMHMM", "S_Cerevisiae", "predicted_topologies.3line"))
-proteins <- strsplit(deeptmhmm, ">")[[1]]
+deeptmhmm_3line <- 
+  here("results", "deepTMHMM", "S_Cerevisiae", "predicted_topologies.3line") %>%
+  read_file() %>%
+  # remove irrelevant transcript id
+  str_remove_all("-t26_1") %>%
+  strsplit(split = ">") %>%
+  .[[1]]
 
-deep_df <- data.frame(seqid = character(),
-                      window_type = character(),
-                      window_length = numeric())
+deeptmhmm_df <- data.frame(seqid = character(),
+                           DeepTMHMM_type = character(),
+                           DeepTMHMM_length = numeric())
 
 # extract SP and TM regions, within first 60 AA
-for (i in 2:length(proteins)) {
+for (i in 2:length(deeptmhmm_3line)) {
     # split 3line into array of strings
-    protein_str <- proteins[i]
+    protein_str <- deeptmhmm_3line[i]
     protein_arr <- str_split(protein_str, "\n")[[1]]
 
     # extract protein details
     details <- str_split(protein_arr[1], " ")[[1]]
     seqid <- details[1]
-    window_type <- details[3]
+    DeepTMHMM_type <- details[3]
 
     # skip proteins that are not TM or SP
-    if (window_type == "GLOB") {
+    if (DeepTMHMM_type == "GLOB") {
         next
     }
 
@@ -452,157 +457,139 @@ for (i in 2:length(proteins)) {
     SP_seqid_list <- c()
     for (j in seq_along(topology_groups)) {
         if (substr(topology_groups[j], 1, 1) == "S") {
-            new_row <- data.frame(seqid = seqid, window_type = "SP", window_length = str_length(topology_groups[j]))
-            deep_df <- rbind(deep_df, new_row)
+            new_row <- data.frame(seqid = seqid, DeepTMHMM_type = "SP", DeepTMHMM_length = str_length(topology_groups[j]))
+            deeptmhmm_df <- rbind(deeptmhmm_df, new_row)
             break
         } 
         else if (substr(topology_groups[j], 1, 1) == "M") {
-            new_row <- data.frame(seqid = seqid, window_type = "TM", window_length = str_length(topology_groups[j]))
-            deep_df <- rbind(deep_df, new_row)
+            new_row <- data.frame(seqid = seqid, DeepTMHMM_type = "TM", DeepTMHMM_length = str_length(topology_groups[j]))
+            deeptmhmm_df <- rbind(deeptmhmm_df, new_row)
             break
         }
     }
 }
 
-labelled_df <- deep_df %>% 
-    mutate(seqid = str_sub(seqid, end = -7)) %>%
-    mutate(method = "DeepTMHMM") %>%
-    mutate(`Experimental label` = case_when(seqid %in% verified_non_srp ~ "Cleaved SP",
-                           seqid %in% screened_non_srp ~ "Cleaved SP",
-                           seqid %in% verified_srp ~ "Non-cleaved SP",
-                           TRUE ~ "unlabelled"))
-verified_df <- labelled_df %>% 
-    filter(`Experimental label` != "unlabelled")
-
-# histogram of lengths binned by experimental label
-DeepTMHMM_predictions_plot <- ggplot(labelled_df %>% mutate(`DeepTMHMM prediction` = window_type),
-        aes(x = window_length, fill = `DeepTMHMM prediction`)) + 
-    geom_histogram(binwidth = 1, center = 0) + 
-    facet_wrap(~`Experimental label`, scales = "free_y", ncol = 1, 
-               strip.position = "right") + 
-    labs(y = "Number of proteins", title = "Lengths of SP/TM regions verified experimentally, coloured by DeepTMHMM prediction") + 
-    scale_fill_manual("DeepTMHMM prediction", 
-                      values = c("SP" = "blue", "TM" = "red")) + 
-    theme(legend.position = "bottom", 
-          strip.text.y.right = element_text(face = "italic", angle = 0))
-
-# save plot
-ggsave(filename = here("results", "figures", "DeepTMHMM_predictions.png"), 
-       plot = DeepTMHMM_predictions_plot, 
-       width = 8, height = 5)
 
 # --- Comparing to phobius ---#
 
 # read full length phobius results
 full_phobius <- read_csv(here("results", "phobius", "S_Cerevisiae_fullSignal.csv")) %>% 
     filter(phobius_end != 0) %>%
-    mutate(window_length = phobius_end - phobius_start + 1) %>% 
-    mutate(window_type = phobius_type) %>% 
-    select(seqid, window_type, window_length) %>% 
+    mutate(phobius_length = phobius_end - phobius_start + 1) %>% 
+    select(seqid, Phobius_type = phobius_type, Phobius_length = phobius_length) %>% 
     mutate(method = "Phobius")
 
 labelled_phobius <- full_phobius %>% 
-    mutate(`Experimental label` = case_when(seqid %in% verified_non_srp ~ "Cleaved SP",
-                           seqid %in% screened_non_srp ~ "Cleaved SP",
-                           seqid %in% verified_srp ~ "Non-cleaved SP",
-                           TRUE ~ "unlabelled"))
+  mutate(`Experimental label` = 
+           case_when(seqid %in% verified_non_srp ~ "Sec63-dependent",
+                     seqid %in% screened_non_srp ~ "Sec63-dependent",
+                     seqid %in% verified_srp ~ "SRP-dependent",
+                     TRUE ~ "Unverified"))
 verified_phobius <- labelled_phobius %>%
-    filter(`Experimental label` != "unlabelled")
+    filter(`Experimental label` != "Unverified")
 
-# verified proteins by classification method
-combined_verified <- rbind(verified_df, verified_phobius)
+# combined table of labelled proteins by classification method
+combined_labelled <- full_join(labelled_phobius, deeptmhmm_df, by = "seqid")
 
-DeepTMHMM_Phobius_comparison_plot <- ggplot(combined_verified, aes(x = window_length, colour = method)) + 
-    geom_histogram(aes(y = after_stat(density)), binwidth = 1, center = 0) + 
-    facet_wrap(~`Experimental label`, scales = "free_y", ncol = 1, 
-               strip.position = "right") +
-    labs(y = "Number of proteins", title = "Lengths of Experimentally validated SP/TM regions, coloured by prediction method") +
-    scale_fill_manual("Experimental label", 
-                      values = c("Cleaved SP" = "blue", "Non-cleaved SP" = "red")) +
-    theme(legend.position = "bottom",
-            strip.text.y.right = element_text(face = "italic", angle = 0))
+# Compare DeepTMHMM predictions with verified proteins
+# make contingency table for display
+contingency_df_deeplabel <- 
+  combined_labelled %>%
+  filter(`Experimental label` != "Unverified") %>% 
+  mutate(`Experimental label` = 
+           factor(`Experimental label`,
+                  levels = c("Sec63-dependent", "SRP-dependent"))
+  ) %>%
+  group_by(`Experimental label`) %>% 
+  summarise(SP = sum(DeepTMHMM_type == "SP", na.rm = TRUE),
+            TM = sum(DeepTMHMM_type == "TM", na.rm = TRUE)) 
 
-# save plot
-ggsave(filename = here("results", "figures", "DeepTMHMM_Phobius_comparison.png"), 
-       plot = DeepTMHMM_Phobius_comparison_plot, 
-       width =8, height = 5)
+contingency_table_deeplabel <- as.table(as.matrix(contingency_df_deeplabel[,2:3]))
 
-# contingency table of verified proteins by classification method
-combined_labelled <- rbind(labelled_df, labelled_phobius)
+# make table pretty for display
+names(dimnames(contingency_table_deeplabel)) <- c("Experimental label", "DeepTMHMM label")
+rownames(contingency_table_deeplabel) <- c("Sec63", "SRP")
 
-match_frequencies <- combined_labelled %>%
-    select(seqid, method, window_type) %>% 
-    pivot_wider(names_from = method, values_from = window_type, values_fill = "No prediction") %>% 
-    group_by(DeepTMHMM, Phobius) %>%
-    summarise(count = n()) %>%
-    ungroup()
+# run chi-squared independence test and extract p-value
+# the null hypothesis is that the two categorical variables are independent
+# the p-value rejects this, so there is a high association between the phobius label and the experimental label
+test_deeplabel <- chisq.test(contingency_table_deeplabel)
+p_value_deeplabel <- test_deeplabel$p.value
+p_value_deeplabel
 
-contingency_table <- match_frequencies %>% 
-    pivot_wider(names_from = Phobius, values_from = count, values_fill = 0)
+knitr::kable(contingency_table_deeplabel, caption = "Contingency table of SP/TM regions predicted by DeepTMHMM and verified translocon", format = "simple")
 
-contingency_table <- data.frame(DeepTMHMM = contingency_table$DeepTMHMM,
-                                `No prediction` = contingency_table$`No prediction`,
-                                SP = contingency_table$SP,
-                                TM = contingency_table$TM) %>% 
-    column_to_rownames("DeepTMHMM")
 
-knitr::kable(contingency_table, caption = "Contingency table of SP/TM regions predicted by DeepTMHMM and Phobius", format = "simple")
+
+# contingency table by method
+contingency_df_deepphob <- 
+  combined_labelled %>%
+  group_by(DeepTMHMM_type, Phobius_type) %>%
+  summarise(count = n()) %>%
+  ungroup() %>% 
+  pivot_wider(names_from = Phobius_type, values_from = count, values_fill = 0)
+
+contingency_table_deepphob <- as.table(as.matrix(contingency_df_deepphob[1:2,2:3]))
+
+# make table pretty for display
+names(dimnames(contingency_table_deepphob)) <- c("DeepTMHMM", "Phobius")
+rownames(contingency_table_deepphob) <- c("SP", "TM")
+
+# test if Phobius and DeepTMHMM agree, where they both make predictions
+# run chi-squared independence test and extract p-value
+# the null hypothesis is that the two categorical variables are independent
+# the p-value rejects this, so there is a high association between the phobius label and the experimental label
+test_deepphob <- chisq.test(contingency_table_deepphob)
+p_value_deepphob <- test_length$p.value
+p_value_deepphob
+
+knitr::kable(contingency_table_deepphob, caption = "Contingency table of SP/TM regions predicted by both DeepTMHMM and Phobius", format = "simple")
 
 # scatter of predicted lengths by method, coloured by label match
-require(tune)
-label_match_df <- combined_labelled %>% 
-    select(seqid, method, window_length, window_type) %>% 
-    group_by(seqid) %>%
-    pivot_wider(names_from = method, values_from = c(window_length, window_type)) %>%
-    drop_na() %>% 
-    mutate(label_prediction = case_when(window_type_DeepTMHMM == window_type_Phobius ~ "Match",
-                             TRUE ~ "Mismatch")) %>%
-    ungroup() %>%
-    select(Phobius = window_length_Phobius, DeepTMHMM = window_length_DeepTMHMM, label_prediction)
 
-matching_spearman <- label_match_df %>% 
-    filter(label_prediction == "Match") %>%
-    select(Phobius, DeepTMHMM) %>%
-    cor(method = "spearman")
+deepphob_lengthcor_df <- 
+  combined_labelled %>%
+  dplyr::rename(Phobius = Phobius_type, DeepTMHMM = DeepTMHMM_type) %>%
+  group_by(Phobius, DeepTMHMM) %>%
+  summarise(cor_length = cor(Phobius_length, DeepTMHMM_length, 
+                             use = "pairwise.complete.obs"),
+            count = n(),
+            .groups = "drop") %>%
+  mutate(cor_label = paste0("R = ", round(cor_length, digits = 2)),
+         count_label = paste0("n = ", count),
+         both_label = paste0(count_label, "\n", cor_label))
 
-all_spearman <- cor(label_match_df$Phobius, label_match_df$DeepTMHMM, method = "spearman")
+deepphob_match_df <- 
+  combined_labelled %>%
+  dplyr::rename(Phobius = Phobius_type, DeepTMHMM = DeepTMHMM_type) %>%
+  group_by(Phobius, Phobius_length,  DeepTMHMM, DeepTMHMM_length) %>%
+  summarise(count = n(), .groups = "drop")
 
-label_match_df %>%
-    group_by(Phobius, DeepTMHMM, label_prediction) %>%
-    summarise(count = n()) %>%
-    ggplot(aes(x = Phobius, y = DeepTMHMM, size = count, colour = label_prediction)) +
-    geom_point() +
-    labs(x = "Phobius predicted length", y = "DeepTMHMM predicted length",
-            title = "Phobius vs DeepTMHMM predicted lengths of all S. Cerevisiae proteins, \ncoloured by if their label predictions match") +
-    scale_color_manual(values = c("Match" = "green", "Mismatch" = "red")) +
-    geom_abline(intercept = 0, slope = 1) + 
-    tune::coord_obs_pred() + 
-    geom_text(inherit.aes = FALSE, x = 48, y = 28, label = paste("Spearman correlation (all):", round(all_spearman, 2)), show.legend = FALSE) +
-    geom_text(inherit.aes = FALSE, x = 50, y = 30, label = paste("Spearman correlation (matching):", round(matching_spearman[2], 2)), show.legend = FALSE, colour = "green")
+deepphob_match_plot <- 
+  ggplot(data = deepphob_match_df  %>%
+           drop_na(),
+         aes(x = Phobius_length, y = DeepTMHMM_length)) +
+  geom_abline(slope = 1, intercept = 0, colour = "grey60") + 
+  geom_point(aes(size = count), colour = "forestgreen") +
+  geom_text(data = deepphob_lengthcor_df %>%
+              drop_na(),
+            aes(label = both_label),
+            x = 30, y = 60, hjust = 0, vjust = 1, size = 3,
+            inherit.aes = FALSE) +
+  facet_grid(DeepTMHMM ~ Phobius, labeller = label_both) +
+  theme(panel.border = element_rect(fill = NA, colour = "grey90")) + 
+  tune::coord_obs_pred() + 
+  labs(x = "Phobius predicted length",
+       y = "DeepTMHMM predicted length")
 
-# scatter of predicted lengths by method, coloured by experimental label
-experimental_match_df <- combined_labelled %>% 
-    select(seqid, method, window_length, `Experimental label`) %>%
-    filter(`Experimental label` != "unlabelled") %>%
-    group_by(seqid) %>%
-    pivot_wider(names_from = method, values_from = window_length) %>%
-    drop_na() %>% 
-    ungroup()
+deepphob_match_plot
 
-experimental_spearman <- cor(experimental_match_df$Phobius, experimental_match_df$DeepTMHMM, method = "spearman")
+# save plot
+ggsave(filename = here("results", "figures", "Phobius_DeepTMHMM_length_match.pdf"), 
+       plot = deepphob_match_plot, 
+       width = 6.5, height = 5.5, dpi = 300)
 
-experimental_match_df %>%
-    group_by(Phobius, DeepTMHMM, `Experimental label`) %>%
-    summarise(count = n()) %>%
-    ggplot(aes(x = Phobius, y = DeepTMHMM, colour = `Experimental label`, size = count)) +
-    geom_point() +
-    labs(x = "Phobius predicted length", y = "DeepTMHMM predicted length",
-            title = "Phobius vs DeepTMHMM predicted lengths of experimentally verified S. Cerevisiae proteins, \ncoloured by experimental label") +
-    scale_color_manual(values = c("Cleaved SP" = "blue", "Non-cleaved SP" = "red")) +
-    geom_abline(intercept = 0, slope = 1) +
-    tune::coord_obs_pred() + 
-    geom_text(inherit.aes = FALSE, x = 48, y = 28, label = paste("Spearman correlation:", round(experimental_spearman, 2)), show.legend = FALSE)
-    
-# run chi-squared independence test and extract p-value
-chisq.test(as.matrix(contingency_table[,1:3]))
-
+ggsave(filename = here("results", "figures", "Phobius_DeepTMHMM_length_match.png"), 
+       plot = deepphob_match_plot, 
+       width = 6.5, height = 5.5, dpi = 300)
+ 
