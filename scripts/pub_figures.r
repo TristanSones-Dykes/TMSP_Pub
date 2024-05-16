@@ -14,6 +14,7 @@ library(ggthemes)
 library(vcd)
 library(Biostrings)
 theme_set(theme_cowplot(font_size = 10) +
+theme_set(theme_cowplot(font_size = 10) +
             theme(strip.background = element_blank(),
                   plot.margin = unit(c(0,0,0,0), units = "inches")))
 
@@ -651,7 +652,6 @@ ggsave(filename = here("results", "figures", "Phobius_DeepTMHMM_length_match.pdf
 ggsave(filename = here("results", "figures", "Phobius_DeepTMHMM_length_match.png"),
        plot = deepphob_match_plot,
        width = 6.5, height = 5.5, dpi = 300)
-
 
 # --- Amino acid composition analysis --- #
 # get all S.Cerevisiae proteins and subset by phobius prediction
