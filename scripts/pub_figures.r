@@ -694,6 +694,18 @@ ggplot(AA_prob_df, aes(x = AA, y = prob)) +
           legend.text = element_text(size = 8),
           plot.margin = unit(c(0.1,0.1,0.1,0.1), "inches"))
 
+ggplot(AA_prob_df, aes(x = AA, y = prob)) + 
+    geom_line(aes(group = group, colour = group)) +
+    scale_colour_manual(values = c("Verified SRP-dependent" = "red",
+                                 "Verified Sec63-dependent" = "blue",
+                                 "Phobius TM" = "green",
+                                 "Phobius SP" = "purple")) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+          legend.position = "bottom",
+          legend.title = element_blank(),
+          legend.text = element_text(size = 8),
+          plot.margin = unit(c(0.1,0.1,0.1,0.1), "inches"))
+
 # --- Secretion efficiency paper --- #
 #                        (YDR418W)    YDR134C
 deleted <- c("YBR187W", "YDR417C", "YLR110C", "YOR387C", "YDR519W")
