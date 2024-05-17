@@ -567,14 +567,18 @@ deepphob_match_df <-
 
 deepphob_match_plot <- 
   ggplot(data = deepphob_match_df  %>%
-           drop_na(),
+           drop_na() %>%
+           dplyr::mutate(DeepTMHMM = factor(DeepTMHMM, 
+                                            levels = c("TM", "SP"))),
          aes(x = Phobius_length, y = DeepTMHMM_length)) +
   geom_abline(slope = 1, intercept = 0, colour = "grey60") + 
   geom_point(aes(size = count), colour = "forestgreen") +
   geom_text(data = deepphob_lengthcor_df %>%
-              drop_na(),
+              drop_na() %>%
+              dplyr::mutate(DeepTMHMM = factor(DeepTMHMM, 
+                                               levels = c("TM", "SP"))),
             aes(label = both_label),
-            x = 30, y = 60, hjust = 0, vjust = 1, size = 3,
+            x = 40, y = 60, hjust = 0, vjust = 1, size = 3,
             inherit.aes = FALSE) +
   facet_grid(DeepTMHMM ~ Phobius, labeller = label_both) +
   theme(panel.border = element_rect(fill = NA, colour = "grey90")) + 
