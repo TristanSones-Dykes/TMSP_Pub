@@ -658,26 +658,28 @@ AA_counts <- function(AA_list, group_name = NA, as.prob = FALSE) {
 verified_SRP <- S.C_phobius_df %>% 
     filter(`Experimental label` == "SRP-dependent") %>% 
     pull(window_AA_string) %>% 
-    AA_counts(group_name = "Verified SRP-dependent", as.prob = TRUE)
+    AA_counts(group_name = "Verified SRP-dependent")
 
 verified_Sec63 <- S.C_phobius_df %>%
     filter(`Experimental label` == "Sec63-dependent") %>%
     pull(window_AA_string) %>% 
-    AA_counts(group_name = "Verified Sec63-dependent", as.prob = TRUE)
+    AA_counts(group_name = "Verified Sec63-dependent")
 
 phobius_TM <- S.C_phobius_df %>%
     filter(window_type == "TM") %>%
     pull(window_AA_string) %>% 
-    AA_counts(group_name = "Phobius TM", as.prob = TRUE)
+    AA_counts(group_name = "Phobius TM")
 
 phobius_SP <- S.C_phobius_df %>%
     filter(window_type == "SP") %>%
     pull(window_AA_string) %>% 
-    AA_counts(group_name = "Phobius SP", as.prob = TRUE)
+    AA_counts(group_name = "Phobius SP")
 
 AA_prob_df <- bind_rows(verified_SRP, verified_Sec63, phobius_TM, phobius_SP) %>% 
-    pivot_longer(cols = -group, names_to = "AA", values_to = "prob") %>% 
-    mutate(AA = factor(AA, levels = sorted_AA))
+    pivot_longer(cols = -group, names_to = "AA", values_to = "count") %>% 
+    mutate(AA = factor(AA, levels = sorted_AA)) %>% 
+    group_by(group) %>% 
+    mutate(prob = count / sum(count))
 
 # plot
 ggplot(AA_prob_df, aes(x = AA, y = prob)) +
