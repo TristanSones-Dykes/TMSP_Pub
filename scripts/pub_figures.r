@@ -166,7 +166,7 @@ breaks_explabel <- c("Sec63-dependent",
                      "Unverified")
 colour_explabel <- c("Sec63-dependent" = "blue", 
                      "SRP-dependent" = "red",
-                     "Unverified" = "purple")
+                     "Unverified" = "plum4")
 size_explabel <- c("Sec63-dependent" = 1.5, 
                    "SRP-dependent" = 1.5,
                    "Unverified" = 0.5)
@@ -183,7 +183,11 @@ base_ScScatMarg <-
                  size   = `Experimental label`)) + 
   geom_vline(xintercept = 13.5, linetype = "dashed") + 
   geom_line(data = compound_hydropathy_40linedf,
-            linetype = "dotted") + 
+            #linetype = "dotted"
+            colour = "grey50") +
+  annotate(label = "compound\nhydropathy\n= 40", geom="text",
+           x = 34, y = 1.15, hjust = 1, vjust = 1,
+           colour = "grey50") +
   # ggtitle("Phobius detected SP/TM regions") + 
   scale_x_helix_length +
   scale_y_KD_hydropathy + 
@@ -320,7 +324,11 @@ ggsave(filename = here("results", "figures", "ScHydropathy_scatter_marginals_Ros
        width = 6.5, height = 5.5, dpi = 300)
 
 
-# Figure 2 - histograms of window lengths for each species
+# Figure 2 -  compare amino acid frequencies by type
+
+
+
+# Figure 4 - histograms of window lengths for each species
 
 read_phobius <- function(protein_AA_path) {
     # extract file name from path, replace .fasta with _out
@@ -416,14 +424,14 @@ phobius_plot <-
   geom_histogram(binwidth = 1, center = 0) + 
   geom_vline(xintercept = 13.5, linetype = "dashed") +
   geom_label(data = GO_summary_df, 
-             aes(x = 28, y = height %/% 1.5, label = GO_term), 
+             aes(x = 28, y = height %/% 1.4, label = GO_term), 
              size = 2, inherit.aes = FALSE, show.legend = FALSE) +
   facet_wrap(~species, scales = "free_y", ncol = 1, 
              strip.position = "left") + 
   scale_y_continuous("Number of proteins", position = "right") + 
   scale_x_helix_length +
   scale_fill_manual("Phobius prediction", 
-                    values = c("SP" = "blue", "TM" = "red")) + 
+                    values = c("SP" = "skyblue3", "TM" = "indianred")) + 
   theme(legend.position = "bottom", 
         strip.text.y.left = element_text(face = "italic", angle = 0),
         strip.placement = "outside")
