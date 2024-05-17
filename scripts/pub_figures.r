@@ -258,11 +258,66 @@ ggsave(filename = here("results", "figures", "ScHydropathy_scatter_marginals_KD.
        plot = ScHydropathy_scatter_marginals_plot,
        width = 6.5, height = 5.5, dpi = 300)
 
-# combine figures into grid - not yet done
-# Fig_1 <- plot_grid(Fig_1A, Fig_1B, Fig_1C, Fig_1D, labels = c("A", "B", "C", "D"), ncol = 2, nrow = 2)
 
-# save figure
-# ggsave(here("results", "figures", "Fig_1.jpg"), Fig_1, width = 15, height = 10, dpi = 300)
+## Same figure but for Rose hydrophobicity not Kyte-Doolittle
+
+base_ScScatRose <- 
+  ggplot(labelled_df, aes(x = window_length, 
+                          y = rose_max_hydropathy)) +
+  geom_point(aes(colour = `Experimental label`, 
+                 group  = `Experimental label`,
+                 size   = `Experimental label`)) + 
+  geom_vline(xintercept = 13.5, linetype = "dashed") + 
+  # ggtitle("Phobius detected SP/TM regions") + 
+  scale_x_helix_length +
+  #scale_y_KD_hydropathy + 
+  scale_y_continuous("Rose max. hydropathy") + 
+  scale_colour_manual(breaks = breaks_explabel, values = colour_explabel) +
+  scale_size_manual(breaks = breaks_explabel,values = size_explabel) +
+  theme(legend.box.background = element_rect(colour = "grey60"),
+        legend.box.margin = margin(2, 2, 2, 2, unit = "pt"),
+        legend.justification = c(0.5, 0.5),
+        plot.margin = unit(c(.1,.1,.1,.1), "mm"))
+
+side_ScScatRose <- 
+  ggplot(labelled_df  %>% 
+           dplyr::mutate(`Experimental label` = 
+                           factor(`Experimental label`,
+                                  levels = rev(breaks_explabel))), 
+         aes(y = rose_max_hydropathy,
+             fill = `Experimental label`,
+             group = `Experimental label`)) +
+  geom_histogram(binwidth = 0.01) +
+  # scale_y_KD_hydropathy + 
+  scale_fill_manual(breaks = breaks_explabel, values = colour_explabel) +
+  facet_grid(.~ `Experimental label`, scales = "free_x") +
+  labs(x = "Number of proteins") + 
+  theme(legend.position = "none", 
+        strip.background = element_blank(),
+        strip.text = element_blank(),
+        # axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        plot.margin = unit(c(.1,.1,.1,.1), "mm"))
+
+
+ScRose_scatter_marginals_plot <- 
+  plot_grid(top_ScScatMarg, 
+            get_legend(base_ScScatMarg),
+            base_ScScatRose + 
+              theme(legend.position = "none"), 
+            side_ScScatRose,
+            ncol = 2,
+            align = "hv",
+            axis = "bl",
+            rel_heights = c(0.6, 1),
+            rel_widths = c(1, 0.75)
+  )
+ScRose_scatter_marginals_plot
+
+# save plot
+ggsave(filename = here("results", "figures", "ScHydropathy_scatter_marginals_Rose.pdf"), 
+       plot = ScRose_scatter_marginals_plot, 
+       width = 6.5, height = 5.5, dpi = 300)
 
 
 # Figure 2 - histograms of window lengths for each species
