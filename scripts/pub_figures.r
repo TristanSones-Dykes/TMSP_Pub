@@ -595,42 +595,12 @@ ggsave(filename = here("results", "figures", "Phobius_DeepTMHMM_length_match.png
 
 
 # --- Amino acid composition analysis --- #
-library(ggseqlogo)
-
 # get all S.Cerevisiae proteins and subset by phobius prediction
 S.C_AA <- proteins[[1]]
 S.C_phobius_df <- labelled_df %>%
     select(seqid, window_length, window_start, window_end, window_type, `Experimental label`) %>%
     mutate(window_AA_string = mapply(function(x, y, z) toString(as.character(S.C_AA[[x]][y:z])),
                                      seqid, window_start, window_end))
-
-# create lists by window type and length
-# select SP windows of length 8-12 and TM windows of length 18-23
-# (otherwise too few sequences for logo)
-S.C_phobius_list <- S.C_phobius_df %>%
-    group_by(window_type, window_length) %>%
-    summarise(sequences = list(window_AA_string)) %>%
-    filter((8 <= window_length & window_length <= 12 & window_type == "SP") |
-           (18 <= window_length & window_length <= 23 & window_type == "TM")) %>%
-    mutate(name = paste0(window_type, "_", window_length))
-
-# create named list of "{window_type}_{window_length}" = sequences
-S.C_phobius_list <- setNames(S.C_phobius_list$sequences, S.C_phobius_list$name)
-
-S.C_SP_list <- S.C_phobius_list[names(S.C_phobius_list) %>% str_detect("SP")]
-S.C_TM_list <- S.C_phobius_list[names(S.C_phobius_list) %>% str_detect("TM")]
-
-# plot sequence logos
-SP_logo <- ggseqlogo(S.C_SP_list, facet = "wrap", ncol = 1, seq_type = "aa", method = "probability")
-TM_logo <- ggseqlogo(S.C_TM_list, facet = "wrap", ncol = 1, seq_type = "aa", method = "probability")
-
-ggsave(filename = here("results", "figures", "S.C_SP_logo.pdf"),
-       plot = SP_logo,
-       width = 7, height = 13, dpi = 300)
-ggsave(filename = here("results", "figures", "S.C_TM_logo.pdf"),
-         plot = TM_logo,
-         width = 7, height = 13, dpi = 300)
-
 
 # Amino Acid summary figure
 scales <- read.csv(here("data", "scales.csv"), header = TRUE)
@@ -681,20 +651,8 @@ AA_prob_df <- bind_rows(verified_SRP, verified_Sec63, phobius_TM, phobius_SP) %>
     group_by(group) %>% 
     mutate(prob = count / sum(count))
 
-# plot
-ggplot(AA_prob_df, aes(x = AA, y = prob)) +
-    geom_bar(stat = "identity", aes(fill = group), position = "dodge") +
-    scale_fill_manual(values = c("Verified SRP-dependent" = "red",
-                                 "Verified Sec63-dependent" = "blue",
-                                 "Phobius TM" = "green",
-                                 "Phobius SP" = "purple")) +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
-          legend.position = "bottom",
-          legend.title = element_blank(),
-          legend.text = element_text(size = 8),
-          plot.margin = unit(c(0.1,0.1,0.1,0.1), "inches"))
-
-ggplot(AA_prob_df, aes(x = AA, y = prob)) + 
+# parallel coordinates plot for AA composition
+AA_prob_plot <- ggplot(AA_prob_df, aes(x = AA, y = prob)) + 
     geom_line(aes(group = group, colour = group)) +
     scale_colour_manual(values = c("Verified SRP-dependent" = "red",
                                  "Verified Sec63-dependent" = "blue",
@@ -705,6 +663,12 @@ ggplot(AA_prob_df, aes(x = AA, y = prob)) +
           legend.title = element_blank(),
           legend.text = element_text(size = 8),
           plot.margin = unit(c(0.1,0.1,0.1,0.1), "inches"))
+
+ggsave(filename = here("results", "figures", "AA_prob_plot.pdf"),
+       plot = AA_prob_plot,
+       width = 7, height = 5.5, dpi = 300)
+
+
 
 # --- Secretion efficiency paper --- #
 #                        (YDR418W)    YDR134C
