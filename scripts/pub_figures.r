@@ -60,7 +60,7 @@ scale_y_KD_hydropathy <-
                      limits = c(0, 4.5),
                      expand = c(0,0))
 
-# Figure 1
+# Figure 0
 
 # Plot of contingency table of helix length predicted by phobius
 # and those verified experimentally
@@ -174,6 +174,9 @@ size_explabel <- c("Sec63-dependent" = 1.5,
 compound_hydropathy_40linedf <-
   tibble(window_length = seq(4,34, 0.2),
          KD_max_hydropathy = 40 / window_length)
+
+
+# Figure 1 - Scatter plot of Kyte-Doolittle hydropathy vs helix length
 
 base_ScScatMarg <-
   ggplot(labelled_df, aes(x = window_length,
@@ -320,7 +323,8 @@ ggsave(filename = here("results", "figures", "ScHydropathy_scatter_marginals_Ros
        width = 6.5, height = 5.5, dpi = 300)
 
 
-# Figure 2 - histograms of window lengths for each species
+# Figure 4 - histograms of window lengths for each species
+# --- along with GO term labels for each species --- #
 
 read_phobius <- function(protein_AA_path) {
     # extract file name from path, replace .fasta with _out
@@ -469,7 +473,7 @@ ggsave(filename = here("results", "figures", "phobius_helix_length.png"),
        width = 6, height = 8)
 
 
-# Figure 3 - DeepTMHMM
+# Figure 3 - DeepTMHMM and Phobius comparison scatter
 
 # read string of here/results/proteins/SC_deeptmhmm/predicted_topologies.3line
 deeptmhmm_3line <-
@@ -651,6 +655,9 @@ ggsave(filename = here("results", "figures", "Phobius_DeepTMHMM_length_match.pdf
 ggsave(filename = here("results", "figures", "Phobius_DeepTMHMM_length_match.png"),
        plot = deepphob_match_plot,
        width = 6.5, height = 5.5, dpi = 300)
+
+# Figure 2 - AA Composition
+
 # --- Amino acid composition analysis --- #
 # get all S.Cerevisiae proteins and subset by phobius prediction
 S.C_AA <- proteins[[1]]
