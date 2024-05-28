@@ -14,7 +14,6 @@ library(ggthemes)
 library(vcd)
 library(Biostrings)
 theme_set(theme_cowplot(font_size = 10) +
-theme_set(theme_cowplot(font_size = 10) +
             theme(strip.background = element_blank(),
                   plot.margin = unit(c(0,0,0,0), units = "inches")))
 
@@ -727,6 +726,9 @@ ggsave(filename = here("results", "figures", "AA_prob_plot.pdf"),
        plot = AA_prob_plot,
        width = 7, height = 5.5, dpi = 300)
 
+ggsave(filename = here("results", "figures", "AA_prob_plot.png"),
+       plot = AA_prob_plot,
+       width = 7, height = 5.5, dpi = 300)
 
 
 # --- Secretion efficiency paper --- #
