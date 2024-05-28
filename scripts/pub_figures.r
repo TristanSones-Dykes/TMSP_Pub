@@ -14,7 +14,6 @@ library(ggthemes)
 library(vcd)
 library(Biostrings)
 theme_set(theme_cowplot(font_size = 10) +
-theme_set(theme_cowplot(font_size = 10) +
             theme(strip.background = element_blank(),
                   plot.margin = unit(c(0,0,0,0), units = "inches")))
 
@@ -721,7 +720,8 @@ AA_prob_plot <- ggplot(AA_prob_df, aes(x = AA, y = prob)) +
           legend.position = "bottom",
           legend.title = element_blank(),
           legend.text = element_text(size = 8),
-          plot.margin = unit(c(0.1,0.1,0.1,0.1), "inches"))
+          plot.margin = unit(c(0.1,0.1,0.1,0.1), "inches")) + 
+    labs(x = "Amino Acid", y = "Proportion in AA Sequence")
 
 ggsave(filename = here("results", "figures", "AA_prob_plot.pdf"),
        plot = AA_prob_plot,
