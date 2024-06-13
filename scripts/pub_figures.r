@@ -327,9 +327,6 @@ ggsave(filename = here("results", "figures", "ScHydropathy_scatter_marginals_Ros
        width = 6.5, height = 5.5, dpi = 300)
 
 
-# Figure 2 -  compare amino acid frequencies by type
-# TO MERGE FROM BRANCH
-
 
 # Figure 4 - histograms of window lengths for each species
 # --- along with GO term labels for each species --- #
@@ -668,28 +665,27 @@ ggsave(filename = here("results", "figures", "Phobius_DeepTMHMM_length_match.png
 # Figure 2 - AA Composition
 
 # --- Amino acid composition analysis --- #
-# get all S.Cerevisiae proteins and subset by phobius prediction
-S.C_AA <- proteins[[1]]
-S.C_phobius_df <- labelled_df %>%
+# get all S. cerevisiae proteins and subset by phobius prediction
+SC_AA <- proteins[[1]]
+SC_phobius_df <- labelled_df %>%
     select(seqid, window_length, window_start, window_end, window_type, `Experimental label`) %>%
-    mutate(window_AA_string = mapply(function(x, y, z) toString(as.character(S.C_AA[[x]][y:z])),
-                                     seqid, window_start, window_end))
+    mutate(window_AA_string = 
+               mapply(function(x, y, z) toString(as.character(SC_AA[[x]][y:z])),
+                      seqid, window_start, window_end))
 
-# Amino Acid summary figure
-scales <- read.csv(here("data", "scales.csv"), header = TRUE)
-
-# take KD hydrophocities and sort Amino Acids by KD hydrophobicity
-sorted_AA <- scales %>% 
+# load KD hydrophocities and sort Amino Acids by KD hydrophobicity
+sorted_AA <- 
+    read.csv(here("data", "scales.csv"), header = TRUE) %>% 
     arrange(Kyte.Doolittle) %>% 
     pull(aa)
 
-AA_counts <- function(AA_list, group_name = NA, as.prob = FALSE) {
+count_AAs <- function(AA_list, group_name = NA, as.prob = FALSE) {
     output <- AA_list %>% 
         AAStringSet() %>%
-        alphabetFrequency(as.prob = as.prob) %>%
+        letterFrequency(letters = AA_ALPHABET[1:20], 
+                        as.prob = as.prob) %>%
         as_tibble() %>%
-        summarise_all(sum) %>%
-        select(-c(`*`, `-`, `+`, `.`, other, U, O, B, J, X, Z))
+        summarise_all(sum)
 
     if (!is.na(group_name)) {
         output <- output %>% mutate(group = group_name)
@@ -698,53 +694,70 @@ AA_counts <- function(AA_list, group_name = NA, as.prob = FALSE) {
     return(output)
 }
 
-verified_SRP <- S.C_phobius_df %>% 
+AA_cts_verified_SRP <- SC_phobius_df %>% 
     filter(`Experimental label` == "SRP-dependent") %>% 
     pull(window_AA_string) %>% 
-    AA_counts(group_name = "Verified SRP-dependent")
+    count_AAs(group_name = "Verified SRP-dependent")
 
-verified_Sec63 <- S.C_phobius_df %>%
+AA_cts_verified_Sec63 <- SC_phobius_df %>%
     filter(`Experimental label` == "Sec63-dependent") %>%
     pull(window_AA_string) %>% 
-    AA_counts(group_name = "Verified Sec63-dependent")
+    count_AAs(group_name = "Verified Sec63-dependent")
 
-phobius_TM <- S.C_phobius_df %>%
+AA_cts_phobius_TM <- SC_phobius_df %>%
     filter(window_type == "TM") %>%
     pull(window_AA_string) %>% 
-    AA_counts(group_name = "Phobius TM")
+    count_AAs(group_name = "Phobius TM")
 
-phobius_SP <- S.C_phobius_df %>%
+AA_cts_phobius_SP <- SC_phobius_df %>%
     filter(window_type == "SP") %>%
     pull(window_AA_string) %>% 
-    AA_counts(group_name = "Phobius SP")
+    count_AAs(group_name = "Phobius SP")
 
-AA_prob_df <- bind_rows(verified_SRP, verified_Sec63, phobius_TM, phobius_SP) %>% 
+AA_prob_df <- 
+    bind_rows(AA_cts_verified_SRP, 
+              AA_cts_verified_Sec63, 
+              AA_cts_phobius_TM,
+              AA_cts_phobius_SP) %>% 
     pivot_longer(cols = -group, names_to = "AA", values_to = "count") %>% 
     mutate(AA = factor(AA, levels = sorted_AA)) %>% 
     group_by(group) %>% 
     mutate(prob = count / sum(count))
 
 # parallel coordinates plot for AA composition
-AA_prob_plot <- ggplot(AA_prob_df, aes(x = AA, y = prob)) + 
-    geom_line(aes(group = group, colour = group)) +
-    scale_colour_manual(values = c("Verified SRP-dependent" = "red",
-                                 "Verified Sec63-dependent" = "blue",
-                                 "Phobius TM" = "green",
-                                 "Phobius SP" = "purple")) +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
-          legend.position = "bottom",
+AA_prob_plot <- 
+    ggplot(AA_prob_df, aes(x = AA, y = prob)) + 
+    geom_line(aes(group = group, colour = group),
+              linewidth = 0.8) +
+    scale_colour_manual(
+        breaks = c("Verified SRP-dependent",
+                   "Verified Sec63-dependent",
+                   "Phobius TM",
+                   "Phobius SP"),
+        values = c("Verified SRP-dependent" = "red",
+                   "Verified Sec63-dependent" = "blue",
+                   "Phobius TM" = "indianred",
+                   "Phobius SP" = "skyblue")) +
+    scale_y_continuous(breaks = c(0, 0.1, 0.2),
+                       minor_breaks = c(0.05, 0.15, 0.25),
+                       expand = c(0,0)) +
+    guides(colour = guide_legend(ncol = 2, nrow = 2)) + 
+    theme(legend.position = "bottom",
           legend.title = element_blank(),
           legend.text = element_text(size = 8),
-          plot.margin = unit(c(0.1,0.1,0.1,0.1), "inches")) + 
-    labs(x = "Amino Acid", y = "Proportion in AA Sequence")
+          plot.margin = unit(c(0.1,0.1,0.1,0.1), "inches"),
+          panel.grid.major.y = element_line(colour = "grey90", linewidth = 0.5),
+          panel.grid.minor.y = element_line(colour = "grey90", linewidth = 0.25)) + 
+    labs(x = "Amino Acid, ordered by KD hydrophobicity",
+         y = "Proportion in hydrophobic helix")
 
 ggsave(filename = here("results", "figures", "AA_prob_plot.pdf"),
        plot = AA_prob_plot,
-       width = 7, height = 5.5, dpi = 300)
+       width = 6, height = 4, dpi = 300)
 
 ggsave(filename = here("results", "figures", "AA_prob_plot.png"),
        plot = AA_prob_plot,
-       width = 7, height = 5.5, dpi = 300)
+       width = 6, height = 4, dpi = 300)
 
 
 # --- Secretion efficiency paper --- #
@@ -759,5 +772,5 @@ SC_full <- readAAStringSet(here("data", "proteins", "full", "S_Cerevisiae.fasta"
 SC_full[fixed]
 writeXStringSet(SC_full[fixed], file = here("paper_proteins.fasta"), format = "fasta")
 
-S.C_phobius_df %>%
+SC_phobius_df %>%
     filter(seqid %in% working_deleted)
