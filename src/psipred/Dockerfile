@@ -37,7 +37,9 @@ ENV PATH="/psipred:/psipred/bin:${PATH}"
 # Download UniRef90 data bank and set up BLAST database
 RUN wget ftp://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref90/uniref90.fasta.gz && \
     gunzip -v uniref90.fasta.gz && \
-    formatdb -p T -o T -t uniref90 -i uniref90.fasta 
+    rm -r uniref90.fasta.gz
+
+RUN formatdb -p T -o T -t uniref90 -i uniref90.fasta 
 
 
 # Create a mount point
