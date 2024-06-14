@@ -326,6 +326,10 @@ ggsave(filename = here("results", "figures", "ScHydropathy_scatter_marginals_Ros
        plot = ScRose_scatter_marginals_plot, 
        width = 6.5, height = 5.5, dpi = 300)
 
+ggsave(filename = here("results", "figures", "ScHydropathy_scatter_marginals_Rose.png"), 
+       plot = ScRose_scatter_marginals_plot, 
+       width = 6.5, height = 5.5, dpi = 300)
+
 
 
 # Figure 4 - histograms of window lengths for each species
