@@ -171,3 +171,9 @@ cython_debug/
 # Mac OS X directory listings
 .DS_Store
 ~/.DS_Store
+
+# Docker stuff
+src/psipred/temp/
+src/psipred/results/
+src/psipred/psipred.ipynb
+src/psipred/S_Cerevisiae.fasta

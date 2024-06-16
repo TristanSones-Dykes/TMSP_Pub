@@ -1,0 +1,60 @@
+import os
+import requests
+import json
+import time
+from Bio import SeqIO
+
+# define urls for submission and download
+submission_uri = 'http://bioinf.cs.ucl.ac.uk/psipred/api/submission'
+download_uri = 'http://bioinf.cs.ucl.ac.uk/psipred/api'
+
+# split input fasta into individual sequence files of length 60
+if not os.path.exists('temp'):
+    os.makedirs('temp')
+
+if not os.path.exists('results'):
+    os.makedirs('results')
+
+for seq_record in SeqIO.parse("S_Cerevisiae.fa", "fasta"):
+    seq_id = seq_record.id
+    if len(str(seq_record.seq)) < 61:
+        continue
+    seq = str(seq_record.seq)[:61]
+    with open('temp/'+seq_id+'.fa', 'w') as f:
+        f.write('>'+seq_id+'\n'+seq)
+
+
+# submit each sequence to the server
+for seq_file in os.listdir('temp'):
+    # setup the request
+    payload = {'input_data': (seq_file, open('temp/'+seq_file, 'rb'))}
+    data = {'job': 'psipred',
+            'submission_name': seq_file,
+            'email': "tristansonesdykes@outlook.com"
+            }
+    
+    # send the request
+    print("\nSending Request")
+    r = requests.post(submission_uri+".json", data=data, files=payload)
+    response_data = json.loads(r.text)
+    print(response_data)
+    time.sleep(10)
+
+    # Please do no poll the server more than once every 30 seconds. If you DOS the server we will block your IP range
+    while True:
+        print("Polling result for:"+response_data['UUID'])
+        result_uri = submission_uri+"/"+response_data['UUID']
+        r = requests.get(result_uri, headers={"Accept":"application/json"})
+        result_data = json.loads(r.text)
+        if "Complete" in result_data["state"]:
+            break
+        else:
+            time.sleep(30)
+
+    horiz_path = result_data['submissions'][0]['results'][-1]['data_path']
+    # http://bioinf.cs.ucl.ac.uk/psipred/api/submissions/[FILE_NAME]
+    # Download the file
+    r = requests.get(download_uri + horiz_path)
+    with open('results/'+seq_file+'.horiz', 'w') as f:
+        f.write(r.text)
+    time.sleep(1)
