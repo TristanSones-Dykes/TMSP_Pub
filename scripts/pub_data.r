@@ -103,3 +103,12 @@ for (i in seq_len(dim(species_df)[1])) {
         cat("-----------------------------------\n\n")
     }
 }
+
+cerevisiae_names <- phobius_df %>% 
+    filter(species == "Saccharomyces cerevisiae") %>% 
+    pull(seqid)
+
+library(Biostrings) 
+
+writeXStringSet(proteins[[1]][cerevisiae_names], here("src", "psipred", "S_Cerevisiae.fa"))
+

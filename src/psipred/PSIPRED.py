@@ -23,6 +23,15 @@ for seq_record in SeqIO.parse("S_Cerevisiae.fa", "fasta"):
     with open('temp/'+seq_id+'.fa', 'w') as f:
         f.write('>'+seq_id+'\n'+seq)
 
+# remove all files from temp that have been processed
+for seq_file in os.listdir('temp'):
+    if os.path.exists('results/'+seq_file+'.horiz'):
+        with open('results/'+seq_file+'.horiz', 'r') as f:
+            lines = f.read().splitlines()
+            first = lines[0]
+        if first[0] != ">":
+            print('Removing: '+seq_file)
+            os.remove('temp/'+seq_file)
 
 # submit each sequence to the server
 for seq_file in os.listdir('temp'):
@@ -44,7 +53,11 @@ for seq_file in os.listdir('temp'):
     while True:
         print("Polling result for:"+response_data['UUID'])
         result_uri = submission_uri+"/"+response_data['UUID']
-        r = requests.get(result_uri, headers={"Accept":"application/json"})
+        try:
+            r = requests.get(result_uri, headers={"Accept":"application/json"}, timeout = 30)
+        except requests.exceptions.Timeout:
+            print("Timeout occurred")
+            continue
         result_data = json.loads(r.text)
         if "Complete" in result_data["state"]:
             break
