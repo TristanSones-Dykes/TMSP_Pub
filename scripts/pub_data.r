@@ -112,3 +112,16 @@ library(Biostrings)
 
 writeXStringSet(proteins[[1]][cerevisiae_names], here("src", "psipred", "S_Cerevisiae.fa"))
 
+# --- Run human genome through Phobius --- #
+
+full_human <- readAAStringSet(here("data", "Proteins", "protein.faa"))
+
+# subset those that are at least 60 amino acids long
+human <- full_human[width(full_human) >= 60]
+human <- subseq(human, start = 1, end = 60)
+
+# write to file
+writeXStringSet(human, here("data", "Proteins", "pub", "human_ref.fasta"))
+
+# run phobius
+human_results <- run_phobius(here("data", "Proteins", "pub", "human_ref.fasta"))

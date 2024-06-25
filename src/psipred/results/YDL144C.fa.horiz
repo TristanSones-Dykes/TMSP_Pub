@@ -1,9 +1,13 @@
-<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
-<html><head>
-<title>502 Proxy Error</title>
-</head><body>
-<h1>Proxy Error</h1>
-<p>The proxy server received an invalid
-response from an upstream server.<br />
-The proxy server could not handle the request<p>Reason: <strong>Error reading from remote server</strong></p></p>
-</body></html>
+# PSIPRED HFORMAT (PSIPRED V4.0)
+
+Conf: 965999999989999999998559959999970369999971969987998862232799
+Pred: CCEEEEECCCHHHHHHHHHHHHCCCCEEEEEEHHHHHHHHHCCEEEECCCCCCCEEECCC
+  AA: MSRILVIGAGGVGVITALSLWLKKESDVSLVVRSDYDRVLKHGYTIESCDYGRLEGWRPH
+              10        20        30        40        50        60
+
+
+Conf: 9
+Pred: C
+  AA: H
+      
+

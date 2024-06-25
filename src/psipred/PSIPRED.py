@@ -2,6 +2,7 @@ import os
 import requests
 import json
 import time
+import pandas as pd
 from Bio import SeqIO
 
 # define urls for submission and download
@@ -32,6 +33,8 @@ for seq_file in os.listdir('temp'):
         if first[0] != ">":
             print('Removing: '+seq_file)
             os.remove('temp/'+seq_file)
+        else:
+            print('Keeping: '+seq_file+" didn't complete")
 
 # submit each sequence to the server
 for seq_file in os.listdir('temp'):
@@ -71,3 +74,56 @@ for seq_file in os.listdir('temp'):
     with open('results/'+seq_file+'.horiz', 'w') as f:
         f.write(r.text)
     time.sleep(1)
+
+# go through results file and create sequence CSV
+def psipred_df(conf_lower: int, length_lower: int, count = False) -> pd.DataFrame:
+    if count:
+        from collections import Counter
+
+    row_list = []
+    res_files = os.listdir('results')
+    for res_file in res_files:
+        # read file
+        with open('results/'+res_file, 'r') as f:
+            lines = f.read().splitlines()
+
+        # take predictions and subset using confidence
+        conf_1, conf_2 = lines[2][6:], lines[11][6:]
+        pred_1, pred_2 = lines[3][6:], lines[12][6:]
+        conf = conf_1 + conf_2
+        pred = pred_1 + pred_2
+
+        conf_pred = []
+        for (confidence, prediction) in zip(conf, pred):
+            if int(confidence) >= conf_lower:
+                conf_pred.append(prediction)
+
+        length = 0
+        if count:
+            # return count of helix region predicted AAs
+            pred_counts = Counter(conf_pred)
+            length = pred_counts.get("H", 0)
+        else:
+            # add first helix of length >= length_lower
+            i = 0
+
+            # search entire sequence
+            while i < len(conf_pred) - 1:
+                # find next helix
+                while conf_pred[i] != "H" and i < len(conf_pred) - 1:
+                    i += 1
+                # find length of helix
+                while conf_pred[i] == "H" and i < len(conf_pred) - 1:
+                    length += 1
+                    i += 1
+                # check if length is long enough
+                if length < length_lower:
+                    length = 0
+                else:
+                    break
+        
+        if length > 0:
+            row_list.append({'seqid': res_file[:-9], 'window_length': length})
+
+    seq_df = pd.DataFrame(row_list)
+    return seq_df

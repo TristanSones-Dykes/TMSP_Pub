@@ -764,6 +764,118 @@ ggsave(filename = here("results", "figures", "AA_prob_plot.png"),
        width = 6, height = 4, dpi = 300)
 
 
+# --- PSIPRED analysis --- #
+
+# setwd for python script
+setwd(here("src", "psipred"))
+
+# source psipred extraction script
+library(reticulate)
+source_python(here("src", "psipred", "PSIPRED.py"))
+
+# run psipred extraction
+df <- psipred_df(8, 0)
+
+# plots are done by phobius labels
+phobius_srp <- read_lines(here("results", "proteins", "Saccharomyces cerevisiae_TM.txt"))
+phobius_non_srp <- read_lines(here("results", "proteins", "Saccharomyces cerevisiae_SP.txt"))
+
+labelled_df <- df %>% 
+    mutate(`Phobius Label` =
+            case_when(seqid %in% phobius_srp ~ "SRP-dependent",
+                        seqid %in% phobius_non_srp ~ "Sec63-dependent",
+                        TRUE ~ "Unlabelled")) %>%
+    filter(`Phobius Label` != "Unlabelled")
+
+# plots with no minimum length and high confidence
+labelled_df %>%
+    ggplot(aes(x = window_length, fill = `Phobius Label`)) +
+    geom_histogram(binwidth = 1) +
+    labs(title = "Distribution of window length by Phobius label, confidence >= 8, length >= 0",
+         x = "Window length",
+         y = "Count") +
+    theme(legend.position = "bottom")
+labelled_df %>%
+    ggplot(aes(x = window_length, fill = `Phobius Label`, alpha = 0.8)) +
+    geom_histogram(binwidth = 1, position = "identity") +
+    labs(title = "Distribution of structure prediction counts by Phobius label, confidence >= 8, length >= 0",
+         x = "Window length",
+         y = "Count") +
+    theme(legend.position = "bottom")
+
+# plot using count data - assumes all helix predicted amino acids
+# are part of the same helix
+df <- psipred_df(8, 0, count = TRUE)
+
+labelled_df <- df %>% 
+    mutate(`Phobius Label` =
+            case_when(seqid %in% phobius_srp ~ "SRP-dependent",
+                        seqid %in% phobius_non_srp ~ "Sec63-dependent",
+                        TRUE ~ "Unlabelled")) %>%
+    filter(`Phobius Label` != "Unlabelled")
+
+# recovers the classic distribution from previous analysis
+labelled_df %>% 
+    ggplot(aes(x = window_length, fill = `Phobius Label`, alpha = 0.8)) +
+    geom_histogram(binwidth = 1, position = "identity") +
+    labs(title = "Distribution of structure prediction counts by Phobius label, confidence >= 8, length >= 0",
+         x = "Window length",
+         y = "Count") +
+    theme(legend.position = "bottom")
+
+# by labels, faceted by confidence and length
+confidence_lower <- c(7,8,9)
+length_lower <- c(0, 3, 5, 8)
+
+# all pairs of confidence and length
+pairs <- expand.grid(confidence_lower, length_lower)
+
+# generate data
+full_df <- data.frame()
+
+for (i in 1:nrow(pairs)) {
+    confidence <- pairs$Var1[i]
+    length <- pairs$Var2[i]
+    df <- psipred_df(confidence, length) %>% 
+        mutate(conf_lower = confidence,
+               length_lower = length)
+
+    full_df <- bind_rows(full_df, df)
+}
+
+labelled_full_df <- full_df %>% 
+    mutate(`Phobius Label` =
+            case_when(seqid %in% phobius_srp ~ "SRP-dependent",
+                        seqid %in% phobius_non_srp ~ "Sec63-dependent",
+                        TRUE ~ "Unlabelled")) %>%
+    filter(`Phobius Label` != "Unlabelled")
+
+# interestingly, confidence = 7 has the valley in Sec63-dependent h-region
+# length frequency like the phobius distributions
+labelled_full_df %>%
+    ggplot(aes(x = window_length, fill = `Phobius Label`, alpha = 0.8)) +
+    geom_histogram(binwidth = 1, position="identity") +
+    labs(title = "Distribution of window length by Phobius label, confidence >= {7, 8, 9}, length >= {0, 3, 5, 8}",
+         x = "Window length",
+         y = "Count") +
+    facet_grid(conf_lower ~ length_lower) +
+    theme(legend.position = "bottom")
+
+
+# --- Human ref proteome phobius analysis --- #
+
+human_df <- read_csv(here("results", "phobius", "human_ref.csv")) %>%
+    filter(phobius_end != 0) %>%
+    mutate(window_length = phobius_end - phobius_start + 1)
+
+# plot of window length distribution
+human_df %>%
+    ggplot(aes(x = window_length, fill = phobius_type)) +
+    geom_histogram(binwidth = 1) +
+    labs(title = "Distribution of window length in human reference proteome",
+         x = "Window length",
+         y = "Count")
+
 # --- Secretion efficiency paper --- #
 #                        (YDR418W)    YDR134C
 deleted <- c("YBR187W", "YDR417C", "YLR110C", "YOR387C", "YDR519W")
