@@ -22,3 +22,9 @@ Species names and identifiers are also shown in `pub/proteome_table.txt`
 - Cryptococcus neoformans var. grubii H99
 - Rhizopus delemar RA 99-880
 - Batrachochytrium dendrobatidis JEL423
+
+Also contains the human ref proteome censored to the first 60 AA's.
+
+## protein.faa.zip
+
+Human ref genome as a zip file.

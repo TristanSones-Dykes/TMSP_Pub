@@ -875,18 +875,3 @@ human_df %>%
     labs(title = "Distribution of window length in human reference proteome",
          x = "Window length",
          y = "Count")
-
-# --- Secretion efficiency paper --- #
-#                        (YDR418W)    YDR134C
-deleted <- c("YBR187W", "YDR417C", "YLR110C", "YOR387C", "YDR519W")
-
-# looking at the 5 proteins they altered
-working_deleted <- c("YBR187W", "YDR418W", "YLR110C", "YOR387C", "YDR519W")
-fixed <- sapply(fixed, function(x) paste(x, "-t26_1", sep = ""))
-
-SC_full <- readAAStringSet(here("data", "proteins", "full", "S_Cerevisiae.fasta"))
-SC_full[fixed]
-writeXStringSet(SC_full[fixed], file = here("paper_proteins.fasta"), format = "fasta")
-
-SC_phobius_df %>%
-    filter(seqid %in% working_deleted)

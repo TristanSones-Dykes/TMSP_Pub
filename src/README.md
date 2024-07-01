@@ -13,3 +13,8 @@ A Python script that defines `phobius`, a function for running Phobius on a prot
 ## deepTMHMM.py
 
 Defines `extract_deepTMHMM`, a function for extracting the results of DeepTMHMM analysis. Returning a .csv file of window types and lengths.
+
+# psipred
+
+Contains data and scripts for running PSIPRED on S. Cerevisiae proteins
+predicted by Phobius.

@@ -104,6 +104,9 @@ for (i in seq_len(dim(species_df)[1])) {
     }
 }
 
+
+# --- Write S_Cerevisiae.fa for PSIPRED --- #
+
 cerevisiae_names <- phobius_df %>% 
     filter(species == "Saccharomyces cerevisiae") %>% 
     pull(seqid)
