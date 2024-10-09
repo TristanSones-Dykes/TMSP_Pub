@@ -13,6 +13,7 @@ library(ggplotify)
 library(ggthemes)
 library(vcd)
 library(Biostrings)
+source(here("src", "utils.r"))
 theme_set(theme_cowplot(font_size = 10) +
             theme(strip.background = element_blank(),
                   plot.margin = unit(c(0,0,0,0), units = "inches")))
@@ -36,18 +37,6 @@ labelled_df <- hydropathy_df %>%
 verified_df <- labelled_df %>%
   filter(`Experimental label` != "Unverified")
 
-# plot helix length axis
-lower <- 5
-upper <- 34
-helix_delim <- seq(lower, upper, 5)
-helix_minor <- seq(lower, upper, 5)
-helix_limits <- c(lower, upper)
-scale_x_helix_length <-
-  scale_x_continuous("Predicted helix length (AA)",
-                     breaks = helix_delim,
-                     limits = helix_limits,
-                     minor_breaks = helix_minor,
-                     expand = expansion(mult = 0, add = 0.6))
 
 # plot Kyte-Doolittle hydrophobicity axis
 rough_KD_limits = c(min(labelled_df$KD_max_hydropathy),
@@ -335,143 +324,8 @@ ggsave(filename = here("results", "figures", "ScHydropathy_scatter_marginals_Ros
 # Figure 4 - histograms of window lengths for each species
 # --- along with GO term labels for each species --- #
 
-
-read_phobius <- function(protein_AA_path) {
-    # extract file name from path, replace .fasta with _out
-    file_name <- gsub(".fasta", "", basename(protein_AA_path))
-
-    # create output path
-    out_path <- paste0(here("results", "phobius", file_name), ".csv")
-
-    # check if output path exists, if it does, exit function
-    if (file.exists(out_path)) {
-        return(read_csv(out_path))
-    } else {
-        cat("No output file found")
-    }
-}
-
-# attach path to protein file names
-species_df <- here("data", "proteins", "pub", "proteome_table.txt") %>%
-  read_tsv(comment = "#") %>%
-  # Next line makes Nicename a factor in same order as given
-  mutate(Nicename = as_factor(Nicename),
-         Nicename_splitline =
-           factor(Nicename, levels = Nicename,
-                  labels = str_replace(Nicename,
-                                       pattern = " ",
-                                       replacement = "\n")))
-protein_paths <- here("data", "proteins", "pub", species_df$Filename)
-
-# read in protein sequences
-proteins <- lapply(protein_paths, readAAStringSet)
-
-# run phobius
-phobius_results <- lapply(protein_paths, read_phobius)
-
-for (i in 1:length(phobius_results)) {
-    phobius_results[[i]] <- phobius_results[[i]] %>%
-        filter(phobius_end != 0) %>%
-        mutate(window_length = phobius_end - phobius_start + 1) %>%
-        mutate(species = species_df$Nicename_splitline[i])
-}
-
-# join and reset row names
-phobius_df <- do.call(rbind, phobius_results)
-rownames(phobius_df) <- NULL
-
-# get GO analysis values
-species_file_names <- lapply(species_df$Filename, function(x) gsub(".fasta", "", x))
-
-GO_df <- data.frame(species = character(),
-                    prediction = character(),
-                    GO_term = character(),
-                    p_value = numeric())
-for (species_file in species_file_names) {
-    for (prediction in c("SP", "TM")) {
-        prediction_file <- paste(species_file, prediction, sep = "_")
-        path <- here("results", "GO", prediction_file, "goEnrichmentResult.tsv")
-
-        # get lowest p-value GO term
-        # after removing meaningless "cellular component"
-        go_df <- read_tsv(path)
-        go_df <- go_df %>%
-            filter(Name != "cellular component") %>%
-            filter(`P-value` == min(`P-value`))
-
-        GO_df <- rbind(GO_df,
-                               data.frame(species = species_file,
-                                          prediction = prediction,
-                                          GO_term = go_df$Name,
-                                          p_value = go_df$`P-value`))
-    }
-}
-
-# heights of histogram modes for GO label positions
-sub_figure_heights <- phobius_df %>%
-    filter(window_length == 12) %>%
-    group_by(species) %>%
-    summarise(height = n())
-
-# create a dataframe with species, prediction, GO term and p-value
-GO_summary_df <- species_df %>%
-    mutate(Filename = gsub(".fasta", "", Filename)) %>%
-    left_join(GO_df, by = c("Filename" = "species")) %>%
-    select(species = Nicename_splitline, prediction, GO_term, p_value) %>%
-    mutate(pred_substr = paste(prediction, ": ", GO_term, sep = "")) %>%
-    group_by(species) %>%
-    summarise(GO_term = paste(pred_substr, collapse = "\n")) %>%
-    # shorten longest GO term for display
-    mutate(GO_term = stringr::str_remove(GO_term, pattern = "external ")) %>%
-    left_join(sub_figure_heights, by = c("species" = "species"))
-
-phobius_plot <-
-  ggplot(phobius_df, aes(x = window_length, fill = phobius_type)) +
-  geom_histogram(binwidth = 1, center = 0) +
-  geom_vline(xintercept = 13.5, linetype = "dashed") +
-  geom_label(data = GO_summary_df, 
-             aes(x = 28, y = height %/% 1.4, label = GO_term), 
-             size = 2, inherit.aes = FALSE, show.legend = FALSE) +
-  facet_wrap(~species, scales = "free_y", ncol = 1,
-             strip.position = "left") +
-  scale_y_continuous("Number of proteins", position = "right") +
-  scale_x_helix_length +
-  scale_fill_manual("Phobius prediction", 
-                    values = c("SP" = "skyblue3", "TM" = "indianred")) + 
-  theme(legend.position = "bottom", 
-        strip.text.y.left = element_text(face = "italic", angle = 0),
-        strip.placement = "outside")
-
-# Make fungal species tree / cladogram to inform phobius plot
-library(treeio)
-library(ggtree)
-
-# first define the tree in newick format, read in to treeio format
-fungal12tree_data <-
-  "((((((((Sc:1,Ca:1):1,((Nc:1,Mg:1):1,(Zt:1,Af:1):1):1),Sp:1),(Pg:1,(Um:1,Cn:1):1):1):1):1,Rd:1):1,Bd:1):1);" %>%
-  textConnection() %>%
-  read.newick()
-
-# Plot the tree using ggtree.
-# ladderize = FALSE preserves input tip order.
-fungal12tree_plot <-
-  ggtree(fungal12tree_data,
-       ladderize = FALSE) +
-  # geom_tiplab here would print the tip labels, useful for checking.
-  # geom_tiplab() +
-  scale_y_reverse()
-
-fungal12tree_plot
-
-# make composite plot, including moving the y-axis title
-phobius_composite_plot <-
-  plot_grid(
-    fungal12tree_plot +
-      theme(plot.margin = margin(t = 0, r = 0, b = 0.55, l = 0, unit = "in")),
-    phobius_plot,
-    nrow = 1,
-    rel_widths = c(0.2,1)) +
-  theme(plot.background = element_rect(fill = "white", colour = NA))
+phobius_composite_plot <- phobius_cladogram_plot("proteome_table.txt", "((((((((Sc:1,Ca:1):1,((Nc:1,Mg:1):1,(Zt:1,Af:1):1):1),Sp:1),(Pg:1,(Um:1,Cn:1):1):1):1):1,Rd:1):1,Bd:1):1);")
+phobius_human_composite_plot <- phobius_cladogram_plot("composite_proteome_table.txt", "(((((((((Sc:1,Ca:1):1,((Nc:1,Mg:1):1,(Zt:1,Af:1):1):1),Sp:1),(Pg:1,(Um:1,Cn:1):1):1):1):1,Rd:1):1,Bd:1):1,Hs:1):1);")
 
 # save
 ggsave(filename = here("results", "figures", "phobius_helix_length.pdf"),
@@ -481,6 +335,14 @@ ggsave(filename = here("results", "figures", "phobius_helix_length.pdf"),
 ggsave(filename = here("results", "figures", "phobius_helix_length.png"),
        plot = phobius_composite_plot,
        width = 6, height = 8)
+
+ggsave(filename = here("results", "figures", "phobius_human_helix_length.pdf"),
+         plot = phobius_human_composite_plot,
+         width = 6, height = 8)
+
+ggsave(filename = here("results", "figures", "phobius_human_helix_length.png"),
+            plot = phobius_human_composite_plot,
+            width = 6, height = 8)
 
 
 # Figure 3 - DeepTMHMM and Phobius comparison scatter
@@ -669,6 +531,22 @@ ggsave(filename = here("results", "figures", "Phobius_DeepTMHMM_length_match.png
 # Figure 2 - AA Composition
 
 # --- Amino acid composition analysis --- #
+
+# attach path to protein file names
+species_df <- here("data", "proteins", "pub", "proteome_table.txt") %>%
+read_tsv(comment = "#") %>%
+# Next line makes Nicename a factor in same order as given
+mutate(Nicename = as_factor(Nicename),
+        Nicename_splitline =
+        factor(Nicename, levels = Nicename,
+                labels = str_replace(Nicename,
+                                    pattern = " ",
+                                    replacement = "\n")))
+protein_paths <- here("data", "proteins", "pub", species_df$Filename)
+
+# read in protein sequences
+proteins <- lapply(protein_paths, readAAStringSet)
+
 # get all S. cerevisiae proteins and subset by phobius prediction
 SC_AA <- proteins[[1]]
 SC_phobius_df <- labelled_df %>%
@@ -861,80 +739,3 @@ labelled_full_df %>%
     facet_grid(conf_lower ~ length_lower) +
     theme(legend.position = "bottom")
 
-
-# --- Human ref proteome phobius analysis --- #
-
-human_df <- read_csv(here("results", "phobius", "human_ref.csv")) %>%
-    filter(phobius_end != 0) %>%
-    mutate(window_length = phobius_end - phobius_start + 1)
-
-# plot of window length distribution
-human_df %>%
-    ggplot(aes(x = window_length, fill = phobius_type)) +
-    geom_histogram(binwidth = 1) +
-    labs(title = "Distribution of window length in human reference proteome",
-         x = "Window length",
-         y = "Count")
-
-
-human_phobius_df <- human_df %>%
-    mutate(species = "Homo\nsapiens") %>%
-    bind_rows(phobius_df)
-
-composite_sub_figure_heights <- human_phobius_df %>%
-    filter(window_length == 12) %>%
-    group_by(species) %>%
-    summarise(height = n())
-
-human_row <- data.frame(FungiDB_id = "Homo sapiens GRCh38.p14",
-                        Filename = "H_Sapien.fasta",
-                        Nicename = "Homo sapiens",
-                        Nicename_splitline = "Homo\nsapiens")
-composite_species_df <- species_df %>%
-    bind_rows(human_row)
-
-# ran SP and TM selected gene IDs through PANTHER GO-slim for humans
-# SP: Extraceullar region, TM: Membrane
-human_rows = data.frame(species = c("H_Sapien", "H_Sapien"),
-                        prediction = c("SP", "TM"),
-                        GO_term = c("extracellular region", "membrane"),
-                        p_value = c(0, 9.19e-185))
-composite_GO_df <- GO_df %>%
-    bind_rows(human_rows)
-
-
-# create a dataframe with species, prediction, GO term and p-value
-GO_summary_df <- composite_species_df %>%
-    mutate(Filename = gsub(".fasta", "", Filename)) %>%
-    left_join(composite_GO_df, by = c("Filename" = "species")) %>%
-    select(species = Nicename_splitline, prediction, GO_term, p_value) %>%
-    mutate(pred_substr = paste(prediction, ": ", GO_term, sep = "")) %>%
-    group_by(species) %>%
-    summarise(GO_term = paste(pred_substr, collapse = "\n")) %>%
-    # shorten longest GO term for display
-    mutate(GO_term = stringr::str_remove(GO_term, pattern = "external ")) %>%
-    left_join(composite_sub_figure_heights, by = c("species" = "species"))
-
-
-# add human plot to composite plot
-human_composite_plot <- human_phobius_df %>%
-    ggplot(aes(x = window_length, fill = phobius_type)) +
-    geom_histogram(binwidth = 1, center = 0) +
-    geom_vline(xintercept = 13.5, linetype = "dashed") +
-    geom_label(data = GO_summary_df, 
-                aes(x = 28, y = height %/% 1.4, label = GO_term), 
-                size = 2, inherit.aes = FALSE, show.legend = FALSE) +
-    facet_wrap(~species, scales = "free_y", ncol = 1,
-                strip.position = "left") +
-    scale_y_continuous("Number of proteins", position = "right") +
-    scale_x_helix_length +
-    scale_fill_manual("Phobius prediction", 
-                        values = c("SP" = "skyblue3", "TM" = "indianred")) + 
-    theme(legend.position = "bottom", 
-            strip.text.y.left = element_text(face = "italic", angle = 0),
-            strip.placement = "outside")
-
-# save
-ggsave(filename = here("results", "figures", "phobius_helix_length_human.pdf"),
-        plot = human_composite_plot,
-        width = 6, height = 8)

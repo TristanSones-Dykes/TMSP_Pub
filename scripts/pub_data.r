@@ -82,7 +82,6 @@ for (i in 1:length(phobius_results)) {
     write.table(TM, file = paste(here("results", "proteins"), paste(species_names[i], "TM.txt", sep = "_"), sep = "/"), row.names = FALSE, col.names = FALSE, quote = FALSE)
 }
 
-# human names
 
 
 # --- Run S_Cerevisiae through Phobius but full length results --- #
@@ -106,6 +105,22 @@ for (i in seq_len(dim(species_df)[1])) {
         cat("-----------------------------------\n\n")
     }
 }
+
+# ran SP and TM selected gene IDs through PANTHER GO-slim for humans
+# SP: Extraceullar region, TM: Membrane
+human_rows = data.frame(prediction = c("SP", "TM"),
+                        Name = c("extracellular region", "membrane"),
+                        p_value = c(0, 9.19e-185))
+colnames(human_rows) <- c("prediction", "Name", "P-value")
+
+human_rows %>% 
+    filter(prediction == "SP") %>%
+    select(-prediction) %>%
+    write.table(here("results", "GO", "human_ref_SP", "goEnrichmentResult.tsv"), sep = "\t", row.names = FALSE, quote = FALSE)
+human_rows %>% 
+    filter(prediction == "TM") %>%
+    select(-prediction) %>%
+    write.table(here("results", "GO", "human_ref_TM", "goEnrichmentResult.tsv"), sep = "\t", row.names = FALSE, quote = FALSE)
 
 
 # --- Write S_Cerevisiae.fa for PSIPRED --- #
