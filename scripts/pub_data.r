@@ -82,6 +82,9 @@ for (i in 1:length(phobius_results)) {
     write.table(TM, file = paste(here("results", "proteins"), paste(species_names[i], "TM.txt", sep = "_"), sep = "/"), row.names = FALSE, col.names = FALSE, quote = FALSE)
 }
 
+# human names
+
+
 # --- Run S_Cerevisiae through Phobius but full length results --- #
 
 # run phobius
@@ -128,3 +131,15 @@ writeXStringSet(human, here("data", "Proteins", "pub", "human_ref.fasta"))
 
 # run phobius
 human_results <- run_phobius(here("data", "Proteins", "pub", "human_ref.fasta"))
+
+# write TM and SP to file
+SP <- human_results %>% 
+    filter(phobius_type == "SP") %>% 
+    pull(seqid)
+
+TM <- human_results %>%
+    filter(phobius_type == "TM") %>% 
+    pull(seqid)
+
+write.table(SP, file = here("results", "proteins", "human_SP.txt"), row.names = FALSE, col.names = FALSE, quote = FALSE)
+write.table(TM, file = here("results", "proteins", "human_TM.txt"), row.names = FALSE, col.names = FALSE, quote = FALSE)

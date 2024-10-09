@@ -875,3 +875,66 @@ human_df %>%
     labs(title = "Distribution of window length in human reference proteome",
          x = "Window length",
          y = "Count")
+
+
+human_phobius_df <- human_df %>%
+    mutate(species = "Homo\nsapiens") %>%
+    bind_rows(phobius_df)
+
+composite_sub_figure_heights <- human_phobius_df %>%
+    filter(window_length == 12) %>%
+    group_by(species) %>%
+    summarise(height = n())
+
+human_row <- data.frame(FungiDB_id = "Homo sapiens GRCh38.p14",
+                        Filename = "H_Sapien.fasta",
+                        Nicename = "Homo sapiens",
+                        Nicename_splitline = "Homo\nsapiens")
+composite_species_df <- species_df %>%
+    bind_rows(human_row)
+
+# ran SP and TM selected gene IDs through PANTHER GO-slim for humans
+# SP: Extraceullar region, TM: Membrane
+human_rows = data.frame(species = c("H_Sapien", "H_Sapien"),
+                        prediction = c("SP", "TM"),
+                        GO_term = c("extracellular region", "membrane"),
+                        p_value = c(0, 9.19e-185))
+composite_GO_df <- GO_df %>%
+    bind_rows(human_rows)
+
+
+# create a dataframe with species, prediction, GO term and p-value
+GO_summary_df <- composite_species_df %>%
+    mutate(Filename = gsub(".fasta", "", Filename)) %>%
+    left_join(composite_GO_df, by = c("Filename" = "species")) %>%
+    select(species = Nicename_splitline, prediction, GO_term, p_value) %>%
+    mutate(pred_substr = paste(prediction, ": ", GO_term, sep = "")) %>%
+    group_by(species) %>%
+    summarise(GO_term = paste(pred_substr, collapse = "\n")) %>%
+    # shorten longest GO term for display
+    mutate(GO_term = stringr::str_remove(GO_term, pattern = "external ")) %>%
+    left_join(composite_sub_figure_heights, by = c("species" = "species"))
+
+
+# add human plot to composite plot
+human_composite_plot <- human_phobius_df %>%
+    ggplot(aes(x = window_length, fill = phobius_type)) +
+    geom_histogram(binwidth = 1, center = 0) +
+    geom_vline(xintercept = 13.5, linetype = "dashed") +
+    geom_label(data = GO_summary_df, 
+                aes(x = 28, y = height %/% 1.4, label = GO_term), 
+                size = 2, inherit.aes = FALSE, show.legend = FALSE) +
+    facet_wrap(~species, scales = "free_y", ncol = 1,
+                strip.position = "left") +
+    scale_y_continuous("Number of proteins", position = "right") +
+    scale_x_helix_length +
+    scale_fill_manual("Phobius prediction", 
+                        values = c("SP" = "skyblue3", "TM" = "indianred")) + 
+    theme(legend.position = "bottom", 
+            strip.text.y.left = element_text(face = "italic", angle = 0),
+            strip.placement = "outside")
+
+# save
+ggsave(filename = here("results", "figures", "phobius_helix_length_human.pdf"),
+        plot = human_composite_plot,
+        width = 6, height = 8)
