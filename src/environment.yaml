@@ -1,0 +1,16 @@
+name: tmsp-pub
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  # Python dependencies
+  - pip
+  - pandas
+  - numpy
+  - beautifulsoup4
+  - mechanicalsoup
+  - requests
+  - biopython
+  - ipykernel
+  - ruff
+  
