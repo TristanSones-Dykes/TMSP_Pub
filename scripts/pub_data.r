@@ -1,6 +1,6 @@
 ###
 # pub_data.r
-# The purpose of this script is to generate all data used in 
+# The purpose of this script is to generate all data used in
 # figure generation and statistical analysis for the publication.
 ###
 
@@ -15,12 +15,17 @@ source(here("src", "hydrophobicity.r"))
 species_df <- here("data", "proteins", "pub", "proteome_table.txt") %>%
   read_tsv(comment = "#") %>%
   # Next line makes Nicename a factor in same order as given
-  mutate(Nicename = as_factor(Nicename),
-         Nicename_splitline = 
-           factor(Nicename, levels = Nicename,
-                  labels = str_replace(Nicename, 
-                                       pattern = " ", 
-                                       replacement = "\n")))
+  mutate(
+    Nicename = as_factor(Nicename),
+    Nicename_splitline =
+      factor(Nicename,
+        levels = Nicename,
+        labels = str_replace(Nicename,
+          pattern = " ",
+          replacement = "\n"
+        )
+      )
+  )
 protein_paths <- here("data", "proteins", "pub", species_df$Filename)
 species_names <- species_df$Nicename
 
@@ -33,10 +38,10 @@ phobius_results <- lapply(protein_paths, run_phobius)
 # filter out sequences with no signal peptides
 # and add species name
 for (i in 1:length(phobius_results)) {
-    phobius_results[[i]] <- phobius_results[[i]] %>% 
-        filter(phobius_end != 0) %>%
-        mutate(window_length = phobius_end - phobius_start + 1) %>% 
-        mutate(species = species_names[i])
+  phobius_results[[i]] <- phobius_results[[i]] %>%
+    filter(phobius_end != 0) %>%
+    mutate(window_length = phobius_end - phobius_start + 1) %>%
+    mutate(species = species_names[i])
 }
 
 # join and reset row names
@@ -45,9 +50,9 @@ rownames(phobius_df) <- NULL
 
 # --- Subset and create S_Cerevisiae.csv --- #
 
-S_Cerevisiae <- phobius_df %>% 
-    filter(species == "Saccharomyces cerevisiae") %>%
-    select(-species)
+S_Cerevisiae <- phobius_df %>%
+  filter(species == "Saccharomyces cerevisiae") %>%
+  select(-species)
 
 # extract Rose scale
 rose <- scales[, c("aa", "Rose")]
@@ -61,8 +66,8 @@ rose_df <- add_compound_hydropathy_score(S_Cerevisiae, AA_stringset, scale = ros
 # rename and join
 KD_df <- KD_df %>% rename(compound_hydropathy = "KD_hydropathy", max_hydropathy = "KD_max_hydropathy")
 rose_df <- rose_df %>% rename(compound_hydropathy = "rose_hydropathy", max_hydropathy = "rose_max_hydropathy")
-SC_output <- KD_df %>% 
-    inner_join(rose_df %>% select(seqid, rose_hydropathy, rose_max_hydropathy), by = "seqid")
+SC_output <- KD_df %>%
+  inner_join(rose_df %>% select(seqid, rose_hydropathy, rose_max_hydropathy), by = "seqid")
 
 # write to file
 write.csv(SC_output, here("results", "figures", "SC_first_60.csv"), row.names = FALSE)
@@ -71,15 +76,15 @@ write.csv(SC_output, here("results", "figures", "SC_first_60.csv"), row.names = 
 
 # write each phobius_type group of each species to a text file
 for (i in 1:length(phobius_results)) {
-    SP <- phobius_results[[i]] %>% 
-        filter(phobius_type == "SP") %>% 
-        pull(seqid)
-    TM <- phobius_results[[i]] %>% 
-        filter(phobius_type == "TM") %>% 
-        pull(seqid)
+  SP <- phobius_results[[i]] %>%
+    filter(phobius_type == "SP") %>%
+    pull(seqid)
+  TM <- phobius_results[[i]] %>%
+    filter(phobius_type == "TM") %>%
+    pull(seqid)
 
-    write.table(SP, file = paste(here("results", "proteins"), paste(species_names[i], "SP.txt", sep = "_"), sep = "/"), row.names = FALSE, col.names = FALSE, quote = FALSE)
-    write.table(TM, file = paste(here("results", "proteins"), paste(species_names[i], "TM.txt", sep = "_"), sep = "/"), row.names = FALSE, col.names = FALSE, quote = FALSE)
+  write.table(SP, file = paste(here("results", "proteins"), paste(species_names[i], "SP.txt", sep = "_"), sep = "/"), row.names = FALSE, col.names = FALSE, quote = FALSE)
+  write.table(TM, file = paste(here("results", "proteins"), paste(species_names[i], "TM.txt", sep = "_"), sep = "/"), row.names = FALSE, col.names = FALSE, quote = FALSE)
 }
 
 
@@ -92,44 +97,46 @@ full_results <- run_phobius(here("data", "Proteins", "pub", "S_Cerevisiae.fasta"
 # --- GO Analysis using fungidb --- #
 
 for (i in seq_len(dim(species_df)[1])) {
-    species_tax <- species_df$FungiDB_id[i]
-    species_name <- species_df$Nicename[i]
-    output_file <- str_split(species_df$Filename[i], "\\.")[[1]][1]
+  species_tax <- species_df$FungiDB_id[i]
+  species_name <- species_df$Nicename[i]
+  output_file <- str_split(species_df$Filename[i], "\\.")[[1]][1]
 
-    for (type in c("TM", "SP")) {
-        input_file <- here("results", "proteins", paste(species_name, paste(type, ".txt", sep=""), sep = "_"))
-        output_dir <- here("results", "GO", paste(output_file, type, sep = "_"))
+  for (type in c("TM", "SP")) {
+    input_file <- here("results", "proteins", paste(species_name, paste(type, ".txt", sep = ""), sep = "_"))
+    output_dir <- here("results", "GO", paste(output_file, type, sep = "_"))
 
-        cat(paste("Running GO analysis for", species_name, type, "proteins:\n"))
-        system(paste("sh", here("src", "GO_analysis.sh"), "-t", paste("'", species_tax, "'", sep = ""), "-i", paste("'", input_file, "'", sep=""), "-o", output_dir))
-        cat("-----------------------------------\n\n")
-    }
+    cat(paste("Running GO analysis for", species_name, type, "proteins:\n"))
+    system(paste("sh", here("src", "GO_analysis.sh"), "-t", paste("'", species_tax, "'", sep = ""), "-i", paste("'", input_file, "'", sep = ""), "-o", output_dir))
+    cat("-----------------------------------\n\n")
+  }
 }
 
 # ran SP and TM selected gene IDs through PANTHER GO-slim for humans
 # SP: Extraceullar region, TM: Membrane
-human_rows = data.frame(prediction = c("SP", "TM"),
-                        Name = c("extracellular region", "membrane"),
-                        p_value = c(0, 9.19e-185))
+human_rows <- data.frame(
+  prediction = c("SP", "TM"),
+  Name = c("extracellular region", "membrane"),
+  p_value = c(0, 9.19e-185)
+)
 colnames(human_rows) <- c("prediction", "Name", "P-value")
 
-human_rows %>% 
-    filter(prediction == "SP") %>%
-    select(-prediction) %>%
-    write.table(here("results", "GO", "human_ref_SP", "goEnrichmentResult.tsv"), sep = "\t", row.names = FALSE, quote = FALSE)
-human_rows %>% 
-    filter(prediction == "TM") %>%
-    select(-prediction) %>%
-    write.table(here("results", "GO", "human_ref_TM", "goEnrichmentResult.tsv"), sep = "\t", row.names = FALSE, quote = FALSE)
+human_rows %>%
+  filter(prediction == "SP") %>%
+  select(-prediction) %>%
+  write.table(here("results", "GO", "human_ref_SP", "goEnrichmentResult.tsv"), sep = "\t", row.names = FALSE, quote = FALSE)
+human_rows %>%
+  filter(prediction == "TM") %>%
+  select(-prediction) %>%
+  write.table(here("results", "GO", "human_ref_TM", "goEnrichmentResult.tsv"), sep = "\t", row.names = FALSE, quote = FALSE)
 
 
 # --- Write S_Cerevisiae.fa for PSIPRED --- #
 
-cerevisiae_names <- phobius_df %>% 
-    filter(species == "Saccharomyces cerevisiae") %>% 
-    pull(seqid)
+cerevisiae_names <- phobius_df %>%
+  filter(species == "Saccharomyces cerevisiae") %>%
+  pull(seqid)
 
-library(Biostrings) 
+library(Biostrings)
 
 writeXStringSet(proteins[[1]][cerevisiae_names], here("src", "psipred", "S_Cerevisiae.fa"))
 
@@ -148,13 +155,13 @@ writeXStringSet(human, here("data", "Proteins", "pub", "human_ref.fasta"))
 human_results <- run_phobius(here("data", "Proteins", "pub", "human_ref.fasta"))
 
 # write TM and SP to file
-SP <- human_results %>% 
-    filter(phobius_type == "SP") %>% 
-    pull(seqid)
+SP <- human_results %>%
+  filter(phobius_type == "SP") %>%
+  pull(seqid)
 
 TM <- human_results %>%
-    filter(phobius_type == "TM") %>% 
-    pull(seqid)
+  filter(phobius_type == "TM") %>%
+  pull(seqid)
 
 write.table(SP, file = here("results", "proteins", "human_SP.txt"), row.names = FALSE, col.names = FALSE, quote = FALSE)
 write.table(TM, file = here("results", "proteins", "human_TM.txt"), row.names = FALSE, col.names = FALSE, quote = FALSE)
