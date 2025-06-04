@@ -13,4 +13,5 @@ dependencies:
   - biopython
   - ipykernel
   - ruff
+  - radian
   

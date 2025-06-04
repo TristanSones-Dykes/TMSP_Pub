@@ -165,3 +165,22 @@ TM <- human_results %>%
 
 write.table(SP, file = here("results", "proteins", "human_SP.txt"), row.names = FALSE, col.names = FALSE, quote = FALSE)
 write.table(TM, file = here("results", "proteins", "human_TM.txt"), row.names = FALSE, col.names = FALSE, quote = FALSE)
+
+
+# --- Create 60-length files for new species --- #
+new_species_df <- here("data", "proteins", "full", "proteome_table.txt") %>%
+  read_tsv(comment = "#") %>%
+  mutate(Nicename = as_factor(Nicename))
+new_protein_paths <- here("data", "proteins", "full", new_species_df$Filename)
+new_species_names <- new_species_df$Nicename
+
+# read in protein sequences
+new_proteins <- lapply(new_protein_paths, readAAStringSet)
+
+# remove if less than 60 amino acids
+new_proteins <- lapply(new_proteins, function(x) x[width(x) >= 60])
+# subset to first 60 amino acids
+new_proteins <- lapply(new_proteins, function(x) subseq(x, start = 1, end = 60))
+
+# run phobius
+new_phobius_results <- lapply(new_protein_paths, run_phobius)

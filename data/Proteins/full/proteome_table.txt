@@ -1,0 +1,10 @@
+# proteome_table.txt
+# Species names for non-fungal proteomes in full/
+# in rough phylogenetic order for figure making
+#
+Database_id	Filename	Nicename
+Capsaspora owczarzaki	C_owczarzaki.fasta	Capsaspora owczarzaki
+Mnemiopsis leidyi	M_leidyi.fasta	Mnemiopsis leidyi
+Aurelia aurita	A_aurita.fasta	Aurelia aurita
+Caenorhabditis elegans	C_elegans.fasta	Caenorhabditis elegans
+Drosophila melanogaster	D_melanogaster.fasta	Drosophila melanogaster
