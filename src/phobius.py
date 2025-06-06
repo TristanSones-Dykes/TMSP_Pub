@@ -34,7 +34,8 @@ def phobius(
     if isString:
         browser["protseq"] = fileString
     else:
-        browser.form.set("protfile", origin)
+        file = open(origin, "rb")
+        browser.form.set("protfile", file)
 
     response = browser.submit_selected()
 
