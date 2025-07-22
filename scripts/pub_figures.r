@@ -404,31 +404,31 @@ ggsave(
 # Figure 4 - histograms of window lengths for each species
 # --- along with GO term labels for each species --- #
 
-phobius_composite_plot <- phobius_cladogram_plot("proteome_table.txt", "((((((((Sc:1,Ca:1):1,((Nc:1,Mg:1):1,(Zt:1,Af:1):1):1),Sp:1),(Pg:1,(Um:1,Cn:1):1):1):1):1,Rd:1):1,Bd:1):1);")
-phobius_human_composite_plot <- phobius_cladogram_plot("composite_proteome_table.txt", "(((((((((Sc:1,Ca:1):1,((Nc:1,Mg:1):1,(Zt:1,Af:1):1):1),Sp:1),(Pg:1,(Um:1,Cn:1):1):1):1):1,Rd:1):1,Bd:1):1,Hs:1):1);")
+phobius_composite_plot_fungi <- phobius_cladogram_plot("proteome_table_fungi.txt", "((((((((Sc:1,Ca:1):1,((Nc:1,Mg:1):1,(Zt:1,Af:1):1):1),Sp:1),(Pg:1,(Um:1,Cn:1):1):1):1):1,Rd:1):1,Bd:1):1);")
+phobius_composite_plot_fungihuman <- phobius_cladogram_plot("proteome_table_fungihuman.txt", "(((((((((Sc:1,Ca:1):1,((Nc:1,Mg:1):1,(Zt:1,Af:1):1):1),Sp:1),(Pg:1,(Um:1,Cn:1):1):1):1):1,Rd:1):1,Bd:1):1,Hs:1):1);")
 
 # save
 ggsave(
-  filename = here("results", "figures", "phobius_helix_length.pdf"),
-  plot = phobius_composite_plot,
+  filename = here("results", "figures", "phobius_helix_length_fungi.pdf"),
+  plot = phobius_composite_plot_fungi,
   width = 6, height = 8
 )
 
 ggsave(
-  filename = here("results", "figures", "phobius_helix_length.png"),
-  plot = phobius_composite_plot,
+  filename = here("results", "figures", "phobius_helix_length_fungi.png"),
+  plot = phobius_composite_plot_fungi,
   width = 6, height = 8
 )
 
 ggsave(
-  filename = here("results", "figures", "phobius_human_helix_length.pdf"),
-  plot = phobius_human_composite_plot,
+  filename = here("results", "figures", "phobius_helix_length_fungihuman.pdf"),
+  plot = phobius_composite_plot_fungihuman,
   width = 6, height = 8
 )
 
 ggsave(
-  filename = here("results", "figures", "phobius_human_helix_length.png"),
-  plot = phobius_human_composite_plot,
+  filename = here("results", "figures", "phobius_helix_length_fungihuman.png"),
+  plot = phobius_composite_plot_fungihuman,
   width = 6, height = 8
 )
 
