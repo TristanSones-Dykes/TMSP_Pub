@@ -4,7 +4,7 @@ Protein sequences. Contained in this file:
 
  - Full length protein files, specifically those that have been run through DeepTMHMM (full/)
  - Proteomes used in figure generation and Phobius analysis, filtered to initial 60 amino acids (pub/)
- 
+
 ## pub/
 
 These were downloaded from FungiDB in December 2023.
@@ -23,7 +23,12 @@ Species names and identifiers are also shown in `pub/proteome_table.txt`
 - Rhizopus delemar RA 99-880
 - Batrachochytrium dendrobatidis JEL423
 
-Also contains the human ref proteome censored to the first 60 AA's.
+This also contains some proteins for non-fungal opisthokonts:
+- Capsaspora owczarzaki ATCC 30864
+- Caenorhabditis elegans
+- Drosophila melanogaster
+- Homo sapiens GRCh38.p14 human_ref proteins
+
 
 ## protein.faa.zip
 

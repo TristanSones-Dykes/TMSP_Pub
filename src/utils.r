@@ -174,3 +174,19 @@ phobius_cladogram_plot <- function(species_table, tree_string) {
 
   return(phobius_composite_plot)
 }
+
+
+truncate_proteins_fasta <- function(file, dirin, dirout, maxpos = 60) {
+    # truncate all strings in an amino acid string set
+    # unless they are too short
+    myAAstrings <-
+        readAAStringSet(
+            paste(dirin, file, sep = "/")
+        ) 
+    long_enough <- ( width(myAAstrings) > maxpos )
+    truncAAstrings <- subseq(myAAstrings[long_enough], 
+                             end = maxpos)
+    writeXStringSet(truncAAstrings, 
+                    paste(dirout, file, sep = "/")
+                    )
+}
