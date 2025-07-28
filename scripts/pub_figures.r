@@ -608,7 +608,7 @@ deepphob_match_plot <-
     aes(x = Phobius_length, y = DeepTMHMM_length)
   ) +
   geom_abline(slope = 1, intercept = 0, colour = "grey60") +
-  geom_point(aes(size = count), colour = "forestgreen") +
+  geom_point(aes(size = count), colour = "darkgreen", alpha = 0.5) +
   geom_text(
     data = deepphob_lengthcor_df %>%
       drop_na() %>%
@@ -625,7 +625,9 @@ deepphob_match_plot <-
   labs(
     x = "Phobius predicted length",
     y = "DeepTMHMM predicted length"
-  )
+  ) +
+  scale_x_continuous(breaks = seq(0,100,10)) + 
+  scale_y_continuous(breaks = seq(0,100,10))
 
 deepphob_match_plot
 
