@@ -649,7 +649,7 @@ ggsave(
 # --- Amino acid composition analysis --- #
 
 # attach path to protein file names
-species_df <- here("data", "proteins", "pub", "proteome_table.txt") %>%
+species_df <- here("data", "proteins", "pub", "proteome_table_fungi.txt") %>%
   read_tsv(comment = "#") %>%
   # Next line makes Nicename a factor in same order as given
   mutate(
@@ -777,13 +777,13 @@ AA_prob_plot <-
 ggsave(
   filename = here("results", "figures", "AA_prob_plot.pdf"),
   plot = AA_prob_plot,
-  width = 6, height = 4, dpi = 300
+  width = 4.5, height = 3, dpi = 300
 )
 
 ggsave(
   filename = here("results", "figures", "AA_prob_plot.png"),
   plot = AA_prob_plot,
-  width = 6, height = 4, dpi = 300
+  width = 4.5, height = 3, dpi = 300
 )
 
 
