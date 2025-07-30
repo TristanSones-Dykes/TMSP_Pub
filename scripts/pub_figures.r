@@ -312,7 +312,7 @@ ggsave(
 ggsave(
   filename = here("results", "figures", "ScHydropathy_scatter_marginals_KD.png"),
   plot = ScHydropathy_scatter_marginals_plot,
-  width = 6.5, height = 5.5, dpi = 300
+  width = 6.5, height = 5.5, dpi = 300, bg = "white"
 )
 
 
@@ -396,7 +396,7 @@ ggsave(
 ggsave(
   filename = here("results", "figures", "ScHydropathy_scatter_marginals_Rose.png"),
   plot = ScRose_scatter_marginals_plot,
-  width = 6.5, height = 5.5, dpi = 300
+  width = 6.5, height = 5.5, dpi = 300, bg = "white"
 )
 
 
@@ -417,7 +417,7 @@ ggsave(
 ggsave(
   filename = here("results", "figures", "phobius_helix_length_fungi.png"),
   plot = phobius_composite_plot_fungi,
-  width = 6, height = 8
+  width = 6, height = 8, bg = "white"
 )
 
 ggsave(
@@ -429,7 +429,7 @@ ggsave(
 ggsave(
   filename = here("results", "figures", "phobius_helix_length_fungihuman.png"),
   plot = phobius_composite_plot_fungihuman,
-  width = 6, height = 8
+  width = 6, height = 8, bg = "white"
 )
 
 
@@ -641,7 +641,7 @@ ggsave(
 ggsave(
   filename = here("results", "figures", "Phobius_DeepTMHMM_length_match.png"),
   plot = deepphob_match_plot,
-  width = 6.5, height = 5.5, dpi = 300
+  width = 6.5, height = 5.5, dpi = 300, bg = "white"
 )
 
 # Figure 2 - AA Composition
@@ -783,7 +783,7 @@ ggsave(
 ggsave(
   filename = here("results", "figures", "AA_prob_plot.png"),
   plot = AA_prob_plot,
-  width = 4.5, height = 3, dpi = 300
+  width = 4.5, height = 3, dpi = 300, bg = "white"
 )
 
 
