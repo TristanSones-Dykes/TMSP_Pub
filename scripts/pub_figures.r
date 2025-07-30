@@ -312,7 +312,7 @@ ggsave(
 ggsave(
   filename = here("results", "figures", "ScHydropathy_scatter_marginals_KD.png"),
   plot = ScHydropathy_scatter_marginals_plot,
-  width = 6.5, height = 5.5, dpi = 300
+  width = 6.5, height = 5.5, dpi = 300, bg = "white"
 )
 
 
@@ -396,7 +396,7 @@ ggsave(
 ggsave(
   filename = here("results", "figures", "ScHydropathy_scatter_marginals_Rose.png"),
   plot = ScRose_scatter_marginals_plot,
-  width = 6.5, height = 5.5, dpi = 300
+  width = 6.5, height = 5.5, dpi = 300, bg = "white"
 )
 
 
@@ -417,7 +417,7 @@ ggsave(
 ggsave(
   filename = here("results", "figures", "phobius_helix_length_fungi.png"),
   plot = phobius_composite_plot_fungi,
-  width = 6, height = 8
+  width = 6, height = 8, bg = "white"
 )
 
 ggsave(
@@ -429,7 +429,7 @@ ggsave(
 ggsave(
   filename = here("results", "figures", "phobius_helix_length_fungihuman.png"),
   plot = phobius_composite_plot_fungihuman,
-  width = 6, height = 8
+  width = 6, height = 8, bg = "white"
 )
 
 
@@ -608,7 +608,7 @@ deepphob_match_plot <-
     aes(x = Phobius_length, y = DeepTMHMM_length)
   ) +
   geom_abline(slope = 1, intercept = 0, colour = "grey60") +
-  geom_point(aes(size = count), colour = "forestgreen") +
+  geom_point(aes(size = count), colour = "darkgreen", alpha = 0.5) +
   geom_text(
     data = deepphob_lengthcor_df %>%
       drop_na() %>%
@@ -625,7 +625,9 @@ deepphob_match_plot <-
   labs(
     x = "Phobius predicted length",
     y = "DeepTMHMM predicted length"
-  )
+  ) +
+  scale_x_continuous(breaks = seq(0,100,10)) + 
+  scale_y_continuous(breaks = seq(0,100,10))
 
 deepphob_match_plot
 
@@ -639,7 +641,7 @@ ggsave(
 ggsave(
   filename = here("results", "figures", "Phobius_DeepTMHMM_length_match.png"),
   plot = deepphob_match_plot,
-  width = 6.5, height = 5.5, dpi = 300
+  width = 6.5, height = 5.5, dpi = 300, bg = "white"
 )
 
 # Figure 2 - AA Composition
@@ -647,7 +649,7 @@ ggsave(
 # --- Amino acid composition analysis --- #
 
 # attach path to protein file names
-species_df <- here("data", "proteins", "pub", "proteome_table.txt") %>%
+species_df <- here("data", "proteins", "pub", "proteome_table_fungi.txt") %>%
   read_tsv(comment = "#") %>%
   # Next line makes Nicename a factor in same order as given
   mutate(
@@ -775,13 +777,13 @@ AA_prob_plot <-
 ggsave(
   filename = here("results", "figures", "AA_prob_plot.pdf"),
   plot = AA_prob_plot,
-  width = 6, height = 4, dpi = 300
+  width = 4.5, height = 3, dpi = 300
 )
 
 ggsave(
   filename = here("results", "figures", "AA_prob_plot.png"),
   plot = AA_prob_plot,
-  width = 6, height = 4, dpi = 300
+  width = 4.5, height = 3, dpi = 300, bg = "white"
 )
 
 
