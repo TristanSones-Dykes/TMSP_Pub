@@ -1,8 +1,8 @@
-from bs4 import BeautifulSoup as bs
-import mechanicalsoup
-import pandas as pd
 import os
 
+import mechanicalsoup
+import pandas as pd
+from bs4 import BeautifulSoup as bs
 
 # ------ Description ------
 # This script contains functions to run phobius transmembrane
