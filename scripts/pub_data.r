@@ -12,7 +12,7 @@ source(here("src", "hydrophobicity.r"))
 # --- Run all sequences through phobius --- #
 
 # attach path to protein file names
-species_df <- here("data", "proteins", "pub", "proteome_table_fungi.txt") %>%
+species_df <- here("data", "proteins", "pub", "proteome_table_fungi12.txt") %>%
   read_tsv(comment = "#") %>%
   # Next line makes Nicename a factor in same order as given
   mutate(
@@ -95,7 +95,6 @@ for (i in 1:length(phobius_results)) {
 }
 
 
-
 # --- Run S_Cerevisiae through Phobius but full length results --- #
 
 # run phobius
@@ -111,6 +110,13 @@ for (i in seq_len(dim(species_df)[1])) {
   for (type in c("TM", "SP")) {
     input_file <- here("results", "proteins", paste(species_name, paste(type, ".txt", sep = ""), sep = "_"))
     output_dir <- here("results", "GO", paste(output_file, type, sep = "_"))
+
+    # Check if the output already exists, if not, run the GO analysis
+    if (dir.exists(output_dir)) {
+      cat(paste("GO analysis for", species_name, type, "proteins already exists. Skipping...\n"))
+      cat("-----------------------------------\n\n")
+      next
+    }
 
     cat(paste("Running GO analysis for", species_name, type, "proteins:\n"))
     system(paste("sh", here("src", "GO_analysis.sh"), "-t", paste("'", species_tax, "'", sep = ""), "-i", paste("'", input_file, "'", sep = ""), "-o", output_dir))
