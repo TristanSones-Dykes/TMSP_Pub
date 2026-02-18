@@ -660,21 +660,7 @@ ggsave(
 
 # --- Amino acid composition analysis --- #
 
-# attach path to protein file names
-species_df <- here("data", "proteins", "pub", "proteome_table_fungi.txt") %>%
-  read_tsv(comment = "#") %>%
-  # Next line makes Nicename a factor in same order as given
-  mutate(
-    Nicename = as_factor(Nicename),
-    Nicename_splitline =
-      factor(Nicename,
-        levels = Nicename,
-        labels = str_replace(Nicename,
-          pattern = " ",
-          replacement = "\n"
-        )
-      )
-  )
+species_df <- read_species_table("proteome_table_fungi.txt")
 protein_paths <- here("data", "proteins", "pub", species_df$Filename)
 
 # read in protein sequences
