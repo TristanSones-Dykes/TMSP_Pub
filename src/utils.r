@@ -18,6 +18,78 @@ scale_x_helix_length <-
   )
 
 
+# Read a species proteome table and add Nicename factors
+read_species_table <- function(filename) {
+  here("data", "proteins", "pub", filename) %>%
+    read_tsv(comment = "#") %>%
+    mutate(
+      Nicename = as_factor(Nicename),
+      Nicename_splitline =
+        factor(Nicename,
+          levels = Nicename,
+          labels = str_replace(Nicename,
+            pattern = " ",
+            replacement = "\n"
+          )
+        )
+    )
+}
+
+
+# Process a list of raw phobius results: filter, add window_length and species
+process_phobius_results <- function(phobius_results, species_names) {
+  for (i in seq_along(phobius_results)) {
+    phobius_results[[i]] <- phobius_results[[i]] %>%
+      filter(phobius_end != 0) %>%
+      mutate(
+        window_length = phobius_end - phobius_start + 1,
+        species = species_names[i]
+      )
+  }
+  phobius_df <- do.call(rbind, phobius_results)
+  rownames(phobius_df) <- NULL
+  phobius_df
+}
+
+
+# Write SP and TM protein ID lists for a single species
+write_protein_lists <- function(phobius_result, species_name, output_dir = here("results", "proteins")) {
+  SP <- phobius_result %>%
+    filter(phobius_type == "SP") %>%
+    pull(seqid)
+  TM <- phobius_result %>%
+    filter(phobius_type == "TM") %>%
+    pull(seqid)
+
+  write.table(SP, file = file.path(output_dir, paste0(species_name, "_SP.txt")),
+    row.names = FALSE, col.names = FALSE, quote = FALSE)
+  write.table(TM, file = file.path(output_dir, paste0(species_name, "_TM.txt")),
+    row.names = FALSE, col.names = FALSE, quote = FALSE)
+}
+
+
+# Create a helix length histogram faceted by species
+plot_helix_length_histogram <- function(phobius_df, species_col = "species") {
+  ggplot(phobius_df, aes(x = window_length, fill = phobius_type)) +
+    geom_histogram(binwidth = 1, center = 0) +
+    geom_vline(xintercept = 13.5, linetype = "dashed") +
+    facet_wrap(as.formula(paste("~", species_col)),
+      scales = "free_y", ncol = 1,
+      strip.position = "left"
+    ) +
+    scale_y_continuous("Number of proteins", position = "right") +
+    scale_x_helix_length +
+    scale_fill_manual("Phobius prediction",
+      values = c("SP" = "skyblue3", "TM" = "indianred")
+    ) +
+    theme(
+      legend.position = "bottom",
+      strip.text.y.left = element_text(face = "italic", angle = 0),
+      strip.placement = "outside"
+    )
+}
+
+
 read_phobius <- function(protein_AA_path) {
   # extract file name from path, replace .fasta with _out
   file_name <- gsub(".fasta", "", basename(protein_AA_path))
@@ -34,39 +106,12 @@ read_phobius <- function(protein_AA_path) {
 }
 
 phobius_cladogram_plot <- function(species_table, tree_string) {
-  # attach path to protein file names
-  species_df <- here("data", "proteins", "pub", species_table) %>%
-    read_tsv(comment = "#") %>%
-    # Next line makes Nicename a factor in same order as given
-    mutate(
-      Nicename = as_factor(Nicename),
-      Nicename_splitline =
-        factor(Nicename,
-          levels = Nicename,
-          labels = str_replace(Nicename,
-            pattern = " ",
-            replacement = "\n"
-          )
-        )
-    )
+  species_df <- read_species_table(species_table)
   protein_paths <- here("data", "proteins", "pub", species_df$Filename)
 
-  # read in protein sequences
-  proteins <- lapply(protein_paths, readAAStringSet)
-
-  # run phobius
+  # read phobius results and process
   phobius_results <- lapply(protein_paths, read_phobius)
-
-  for (i in 1:length(phobius_results)) {
-    phobius_results[[i]] <- phobius_results[[i]] %>%
-      filter(phobius_end != 0) %>%
-      mutate(window_length = phobius_end - phobius_start + 1) %>%
-      mutate(species = species_df$Nicename_splitline[i])
-  }
-
-  # join and reset row names
-  phobius_df <- do.call(rbind, phobius_results)
-  rownames(phobius_df) <- NULL
+  phobius_df <- process_phobius_results(phobius_results, species_df$Nicename_splitline)
 
   # get GO analysis values
   species_file_names <- lapply(species_df$Filename, function(x) gsub(".fasta", "", x))

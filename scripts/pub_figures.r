@@ -166,8 +166,6 @@ test_compound <- chisq.test(contingency_table_compound)
 p_value_compound <- test_compound$p.value
 p_value_compound
 
-
-
 # Scatter plot of all proteins with SP/TM regions found by phobius
 # Highlighting verified proteins
 
@@ -406,9 +404,11 @@ ggsave(
 
 # Define cladogram / rough phylogenetic trees in Newick format
 tree_12fungi <- "((((((((Sc:1,Ca:1):1,((Nc:1,Mg:1):1,(Zt:1,Af:1):1):1),Sp:1),(Pg:1,(Um:1,Cn:1):1):1):1):1,Rd:1):1,Bd:1):1);"
-tree_12fungiplushuman <- paste0("(", 
-                                stringr::str_sub(tree_12fungi,end = -3L),
-                                ",Hs:1):1);")
+tree_12fungiplushuman <- paste0(
+  "(",
+  stringr::str_sub(tree_12fungi, end = -3L),
+  ",Hs:1):1);"
+)
 
 # Added 2 species.
 # Pp is Pichia pastoris
@@ -660,21 +660,7 @@ ggsave(
 
 # --- Amino acid composition analysis --- #
 
-# attach path to protein file names
-species_df <- here("data", "proteins", "pub", "proteome_table_fungi.txt") %>%
-  read_tsv(comment = "#") %>%
-  # Next line makes Nicename a factor in same order as given
-  mutate(
-    Nicename = as_factor(Nicename),
-    Nicename_splitline =
-      factor(Nicename,
-        levels = Nicename,
-        labels = str_replace(Nicename,
-          pattern = " ",
-          replacement = "\n"
-        )
-      )
-  )
+species_df <- read_species_table("proteome_table_fungi.txt")
 protein_paths <- here("data", "proteins", "pub", species_df$Filename)
 
 # read in protein sequences
