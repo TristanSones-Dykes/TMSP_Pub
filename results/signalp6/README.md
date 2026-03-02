@@ -1,8 +1,19 @@
-## signalp6
+# signalp6
 
-Results for running SignalP6.0 predictions.
+Results for running SignalP6.0 predictions. Initial run is on S. cerevisiae proteins only.
 
-Initial run is on S. cerevisiae proteins only.
+# Contents
+
+## S_Cerevisiae
+
+SignalP 6.0i predictions on Saccharomyces cerevisiae whole proteome. Contents saved are:
+
+- output.gff3 - predictions of entire signal peptide results in gff3 format
+- region_output.gff3 - predictions of sub-regions (n-region, h-region, c-region) in gff3 format
+- prediction_results.txt - table of proteome-wide results
+
+
+# How SignalP was installed and run.
 
 Code used to install and run SignalP6.0, from the directory TMSP_PUB was:
 
@@ -15,24 +26,38 @@ mkdir results/signalp6/S_Cerevisiae
 biolib run DTU/SignalP-6 --fastafile data/Proteins/full/S_Cerevisiae.fasta --output_dir results/signalp6/S_Cerevisiae --format txt --organism eukarya --mode fast
 ```
 
-However, this ran via the SignalP server up to `Predicting:  12% 700/5907 [09:50<1:13:28,  1.18sequences/s]`, then gave error `biolib.biolib_errors.BioLibError: Cloud: Job exceeded max run time`
+However, running via biolib uses the SignalP server, has limits of < 1000 proteins, and
 
-This means that, to run we will either need to break into parts...
+Installed it locally following [Installation Instructions](https://github.com/fteufel/signalp-6.0/blob/main/installation_instructions.md)
 
-````
-biolib run DTU/SignalP-6 --fastafile data/Proteins/full/S_Cerevisiae_001.fasta --output_dir results/signalp6/S_Cerevisiae_001 --format txt --organism eukarya --mode fast
-# Getting FileNotFoundError: [Errno 2] No such file or directory: 'output/output.json'
-biolib run DTU/SignalP-6 --fastafile data/Proteins/full/S_Cerevisiae_002.fasta --output_dir results/signalp6/S_Cerevisiae_002 --format txt --organism eukarya --mode fast
-biolib run DTU/SignalP-6 --fastafile data/Proteins/full/S_Cerevisiae_003.fasta --output_dir results/signalp6/S_Cerevisiae_003 --format txt --organism eukarya --mode fast
-biolib run DTU/SignalP-6 --fastafile data/Proteins/full/S_Cerevisiae_004.fasta --output_dir results/signalp6/S_Cerevisiae_004 --format txt --organism eukarya --mode fast
-biolib run DTU/SignalP-6 --fastafile data/Proteins/full/S_Cerevisiae_005.fasta --output_dir results/signalp6/S_Cerevisiae_005 --format txt --organism eukarya --mode fast
-biolib run DTU/SignalP-6 --fastafile data/Proteins/full/S_Cerevisiae_006.fasta --output_dir results/signalp6/S_Cerevisiae_006 --format txt --organism eukarya --mode fast
-biolib run DTU/SignalP-6 --fastafile data/Proteins/full/S_Cerevisiae_007.fasta --output_dir results/signalp6/S_Cerevisiae_007 --format txt --organism eukarya --mode fast
-biolib run DTU/SignalP-6 --fastafile data/Proteins/full/S_Cerevisiae_008.fasta --output_dir results/signalp6/S_Cerevisiae_008 --format txt --organism eukarya --mode fast
-biolib run DTU/SignalP-6 --fastafile data/Proteins/full/S_Cerevisiae_009.fasta --output_dir results/signalp6/S_Cerevisiae_009 --format txt --organism eukarya --mode fast
-biolib run DTU/SignalP-6 --fastafile data/Proteins/full/S_Cerevisiae_010.fasta --output_dir results/signalp6/S_Cerevisiae_010 --format txt --organism eukarya --mode fast
-biolib run DTU/SignalP-6 --fastafile data/Proteins/full/S_Cerevisiae_011.fasta --output_dir results/signalp6/S_Cerevisiae_011 --format txt --organism eukarya --mode fast
-biolib run DTU/SignalP-6 --fastafile data/Proteins/full/S_Cerevisiae_012.fasta --output_dir results/signalp6/S_Cerevisiae_012 --format txt --organism eukarya --mode fast
+- Unpack the downloaded tar.gz file.
+- Created the Python environment
+- Open the directory containing the downloaded package, and install it by executing the following command.
+- `pip install signalp-6-package/`
 
+Then ran on a test file with 20 proteins by running:
+```
+signalp6 --fastafile data/Proteins/full/S_Cerevisiae_test20.fasta --output_dir results/signalp6/S_Cerevisiae_test20 --format txt --organism eukarya --mode fast --model_dir /Users/ewallac2/Downloads/signalp6_fast/signalp-6-package/models
+```
 
-````
+This produced sensible outputs
+
+output.gff:
+```
+## gff-version 3
+YAL007C-t26_1	SignalP-6.0	signal_peptide	1	25	0.9997047	.	.	.
+```
+
+region_output.gff:
+```
+## gff-version 3
+YAL007C-t26_1	SignalP-6.0	n-region	1	3	.	.	.	.
+YAL007C-t26_1	SignalP-6.0	h-region	4	20	.	.	.	.
+YAL007C-t26_1	SignalP-6.0	c-region	21	25	.	.	.	.
+```
+
+Ran on full set of S. cerevisiae proteins with:
+
+```
+signalp6 --fastafile data/Proteins/full/S_Cerevisiae.fasta --output_dir results/signalp6/S_Cerevisiae --format txt --organism eukarya --mode fast --model_dir /Users/ewallac2/Downloads/signalp6_fast/signalp-6-package/models
+```
