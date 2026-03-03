@@ -656,6 +656,106 @@ ggsave(
   width = 6.5, height = 5.5, dpi = 300, bg = "white"
 )
 
+# Figure 3B - SignalP, DeepTMHMM and Phobius SP length comparison scatter
+# read gff3 file of here/results/signalp6/S_Cerevisiae/output.gff3
+signalp6_regions <-
+  here("results", "signalp6", "S_Cerevisiae", "output.gff3") %>%
+  read_tsv(comment = "#",
+           col_names = c("seqid", "source", "window_type", "window_start", "window_end"),
+           col_types = "cccii") %>%
+  # remove irrelevant transcript id, calculate window length,
+  # and drop empty columns
+  mutate(seqid = str_remove_all(seqid,"-t26_1"),
+         window_length = window_end - window_start + 1,
+         X6 = NULL, X7 = NULL, X8 = NULL, X9 = NULL)
+
+# Figure 3C - SignalP and Phobius h-region length comparison scatter
+
+# read gff3 file of here/results/signalp6/S_Cerevisiae/region_output.gff3
+signalp6_regions <-
+  here("results", "signalp6", "S_Cerevisiae", "region_output.gff3") %>%
+  read_tsv(comment = "#",
+           col_names = c("seqid", "source", "window_type", "window_start", "window_end"),
+           col_types = "cccii") %>%
+  # remove irrelevant transcript id, calculate window length,
+  # and drop empty columns
+  mutate(seqid = str_remove_all(seqid,"-t26_1"),
+         window_length = window_end - window_start + 1,
+         X6 = NULL, X7 = NULL, X8 = NULL, X9 = NULL)
+
+
+# combined table of labelled proteins by phobius and SignalP
+hregions_labelled_phobiussignalp6 <- 
+  full_join(labelled_df %>%
+              filter(window_type == "SP") %>%
+              select(seqid,
+                     Phobius_start = window_start,
+                     Phobius_end = window_end,
+                     Phobius_length = window_length,
+                     Exp_label = "Experimental label"), 
+            signalp6_regions %>%
+              filter(window_type == "h-region") %>%
+              select(seqid,
+                     SignalP6_start = window_start,
+                     SignalP6_end = window_end,
+                     SignalP6_length = window_length), 
+            by = "seqid")
+
+histogram_hregion_Phobius <- 
+  ggplot(data = hregions_labelled_phobiussignalp6) + 
+  geom_histogram(aes(x = Phobius_length),
+                 binwidth = 1, center = 0) +
+  coord_cartesian(xlim = c(4,25))
+
+histogram_hregion_SignalP6 <-
+  ggplot(data = hregions_labelled_phobiussignalp6) + 
+  geom_histogram(aes(x = SignalP6_length),
+                 binwidth = 1, center = 0) +
+  coord_cartesian(xlim = c(4,25))
+
+plot_grid(histogram_hregion_Phobius, histogram_hregion_SignalP6,
+          ncol = 1)
+
+# ggplot(data = hregions_labelled_phobiussignalp6) + 
+#   geom_point(aes(x = Phobius_length, y = SignalP6_length)) +
+#   coord_equal(xlim = c(0,25), ylim = c(0,25), expand = 0)
+
+signalp6_match_df <-
+  hregions_labelled_phobiussignalp6 %>%
+  group_by(Phobius_length, SignalP6_length) %>%
+  summarise(count = n(), .groups = "drop")
+
+signalp6_hregionlength_plot <-
+  ggplot(
+    data = signalp6_match_df,
+    aes(x = Phobius_length, y = SignalP6_length)
+  ) +
+  geom_abline(slope = 1, intercept = 0, colour = "grey60") +
+  geom_point(aes(size = count), colour = "darkgreen", alpha = 0.5) +
+  theme(panel.border = element_rect(fill = NA, colour = "grey90")) +
+  tune::coord_obs_pred() +
+  labs(
+    x = "Phobius predicted h-region length",
+    y = "SignalP6.0 predicted h-region length"
+  )
+
+signalp6_hregionlength_plot
+
+# save plot
+ggsave(
+  filename = here("results", "figures", "Phobius_SignalP6_hregionlength.pdf"),
+  plot = signalp6_hregionlength_plot,
+  width = 4.5, height = 3.5, dpi = 300
+)
+
+ggsave(
+  filename = here("results", "figures", "Phobius_SignalP6_hregionlength.png"),
+  plot = signalp6_hregionlength_plot,
+  width = 4.5, height = 3.5, dpi = 300, bg = "white"
+)
+
+
+
 # Figure 2 - AA Composition
 
 # --- Amino acid composition analysis --- #
