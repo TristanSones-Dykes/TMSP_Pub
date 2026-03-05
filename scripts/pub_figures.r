@@ -11,6 +11,7 @@ library(cowplot)
 library(ggExtra)
 library(ggplotify)
 library(ggthemes)
+library(GGally)
 library(vcd)
 library(Biostrings)
 source(here("src", "utils.r"))
@@ -580,7 +581,7 @@ rownames(contingency_table_deepphob) <- c("SP", "TM")
 # the null hypothesis is that the two categorical variables are independent
 # the p-value rejects this, so there is a high association between the phobius label and the experimental label
 test_deepphob <- chisq.test(contingency_table_deepphob)
-p_value_deepphob <- test_length$p.value
+p_value_deepphob <- test_deepphob$p.value
 p_value_deepphob
 
 knitr::kable(contingency_table_deepphob, caption = "Contingency table of SP/TM regions predicted by both DeepTMHMM and Phobius", format = "simple")
@@ -657,23 +658,54 @@ ggsave(
 )
 
 # Figure 3B - SignalP, DeepTMHMM and Phobius SP length comparison scatter
+# Using SignalP6.0 slow sequential model
 # read gff3 file of here/results/signalp6/S_Cerevisiae/output.gff3
-signalp6_regions <-
-  here("results", "signalp6", "S_Cerevisiae", "output.gff3") %>%
+signalp6_lengthdf <-
+  here("results", "signalp6", "S_Cerevisiae_slow", "output.gff3") %>%
   read_tsv(comment = "#",
            col_names = c("seqid", "source", "window_type", "window_start", "window_end"),
            col_types = "cccii") %>%
   # remove irrelevant transcript id, calculate window length,
   # and drop empty columns
   mutate(seqid = str_remove_all(seqid,"-t26_1"),
-         window_length = window_end - window_start + 1,
-         X6 = NULL, X7 = NULL, X8 = NULL, X9 = NULL)
+         SignalP6_length = window_end,
+         .keep = "none")
+
+combined_labelled_SPwithSignalP6 <- 
+  inner_join(combined_labelled %>%
+              filter(Phobius_type == "SP", 
+                     DeepTMHMM_type == "SP"),
+             signalp6_lengthdf,
+            by = "seqid")
+
+geom_2lengthpred <- function (data, mapping, lim = c(10,50),...) 
+{
+  p <- ggplot(data = data, mapping = mapping) + 
+    geom_abline(slope = 1, intercept = 0, colour = "grey60") + 
+    geom_point(alpha = 0.1, ...) + 
+    coord_cartesian(xlim = lim, ylim = lim)
+  p
+}
+
+geom_1lengthpred <- function (data, mapping, lim = c(10,50), ...) 
+{
+  p <- ggplot(data = data, mapping = mapping) + 
+    geom_histogram(binwidth = 1, center = 0, ...) + 
+    coord_cartesian(xlim = lim)
+  p
+}
+
+ggpairs(data = combined_labelled_SPwithSignalP6 %>%
+          select("Phobius_length", "DeepTMHMM_length", "SignalP6_length"),
+        diag = list(continuous = geom_1lengthpred),
+        lower = list(continuous = geom_2lengthpred, combo = ggally_dot_no_facet)
+)
 
 # Figure 3C - SignalP and Phobius h-region length comparison scatter
-
+# Using SignalP6.0 slow sequential model
 # read gff3 file of here/results/signalp6/S_Cerevisiae/region_output.gff3
 signalp6_regions <-
-  here("results", "signalp6", "S_Cerevisiae", "region_output.gff3") %>%
+  here("results", "signalp6", "S_Cerevisiae_slow", "region_output.gff3") %>%
   read_tsv(comment = "#",
            col_names = c("seqid", "source", "window_type", "window_start", "window_end"),
            col_types = "cccii") %>%
@@ -705,13 +737,15 @@ histogram_hregion_Phobius <-
   ggplot(data = hregions_labelled_phobiussignalp6) + 
   geom_histogram(aes(x = Phobius_length),
                  binwidth = 1, center = 0) +
-  coord_cartesian(xlim = c(4,25))
+  coord_cartesian(xlim = c(4,25)) +
+  labs(x = "Phobius predicted h-region length")
 
 histogram_hregion_SignalP6 <-
   ggplot(data = hregions_labelled_phobiussignalp6) + 
   geom_histogram(aes(x = SignalP6_length),
                  binwidth = 1, center = 0) +
-  coord_cartesian(xlim = c(4,25))
+  coord_cartesian(xlim = c(4,25)) +
+  labs(x = "SignalP6.0 predicted h-region length")
 
 plot_grid(histogram_hregion_Phobius, histogram_hregion_SignalP6,
           ncol = 1)
@@ -733,7 +767,7 @@ signalp6_hregionlength_plot <-
   geom_abline(slope = 1, intercept = 0, colour = "grey60") +
   geom_point(aes(size = count), colour = "darkgreen", alpha = 0.5) +
   theme(panel.border = element_rect(fill = NA, colour = "grey90")) +
-  tune::coord_obs_pred() +
+  tune::coord_obs_pred(xlim = c(0,25), ylim = c(0,25)) +
   labs(
     x = "Phobius predicted h-region length",
     y = "SignalP6.0 predicted h-region length"
