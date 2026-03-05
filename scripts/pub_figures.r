@@ -695,10 +695,25 @@ geom_1lengthpred <- function (data, mapping, lim = c(10,50), ...)
   p
 }
 
-ggpairs(data = combined_labelled_SPwithSignalP6 %>%
-          select("Phobius_length", "DeepTMHMM_length", "SignalP6_length"),
-        diag = list(continuous = geom_1lengthpred),
-        lower = list(continuous = geom_2lengthpred, combo = ggally_dot_no_facet)
+Phobius_DeepTMHMM_SignalP6_SPlength_plot <- 
+  ggpairs(data = combined_labelled_SPwithSignalP6 %>%
+            select("Phobius_length", "DeepTMHMM_length", "SignalP6_length"),
+          diag = list(continuous = geom_1lengthpred),
+          lower = list(continuous = geom_2lengthpred, combo = ggally_dot_no_facet)
+  )
+
+Phobius_DeepTMHMM_SignalP6_SPlength_plot
+
+ggsave(
+  filename = here("results", "figures", "Phobius_DeepTMHMM_SignalP6_SPlength.pdf"),
+  plot = Phobius_DeepTMHMM_SignalP6_SPlength_plot,
+  width = 6, height = 6, dpi = 300
+)
+
+ggsave(
+  filename = here("results", "figures", "Phobius_DeepTMHMM_SignalP6_SPlength.png"),
+  plot = Phobius_DeepTMHMM_SignalP6_SPlength_plot,
+  width = 6, height = 6, dpi = 300, bg = "white"
 )
 
 # Figure 3C - SignalP and Phobius h-region length comparison scatter
