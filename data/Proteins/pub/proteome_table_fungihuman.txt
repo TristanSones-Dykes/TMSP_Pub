@@ -5,6 +5,8 @@
 FungiDB_id	Filename	Nicename
 Saccharomyces cerevisiae S288C	S_Cerevisiae.fasta	Saccharomyces cerevisiae
 Candida albicans SC5314	C_Albicans.fasta	Candida albicans
+Komagataella phaffii UP000094565	P_pastoris_first_60.fasta	Pichia pastoris
+Trichoderma reesei QM6a	T_reesei.fasta	Trichoderma reesei
 Neurospora crassa OR74A	N_Crassa.fasta	Neurospora crassa
 Pyricularia oryzae BR32	P_Oryzae.fasta	Magnaporthe grisea
 Zymoseptoria tritici IPO323	Z_Tritici.fasta	Zymoseptoria tritici

@@ -400,25 +400,15 @@ ggsave(
 # Figure 4 - histograms of window lengths for each species
 # --- along with GO term labels for each species --- #
 
-# ADD TREE SECTIONS HERE
-# THEN REMOVE HUMAN FROM PLOT
-
-# Define cladogram / rough phylogenetic trees in Newick format
-tree_12fungi <- "((((((((Sc:1,Ca:1):1,((Nc:1,Mg:1):1,(Zt:1,Af:1):1):1),Sp:1),(Pg:1,(Um:1,Cn:1):1):1):1):1,Rd:1):1,Bd:1):1);"
-tree_12fungiplushuman <- paste0(
+tree_14fungi <- "(((((((((Sc:1,Ca:1):1,Pp:1),((Tr:1,(Nc:1,Mg:1):1),(Zt:1,Af:1):1):1),Sp:1),(Pg:1,(Um:1,Cn:1):1):1):1):1,Rd:1):1,Bd:1):1);"
+tree_14fungiplushuman <- paste0(
   "(",
-  stringr::str_sub(tree_12fungi, end = -3L),
+  stringr::str_sub(tree_14fungi, end = -3L),
   ",Hs:1):1);"
 )
 
-# Added 2 species.
-# Pp is Pichia pastoris
-# Tr is Trichoderma reesei
-tree_14fungi <- "(((((((((Sc:1,Ca:1):1,Pp:1),((Tr:1,(Nc:1,Mg:1):1),(Zt:1,Af:1):1):1),Sp:1),(Pg:1,(Um:1,Cn:1):1):1):1):1,Rd:1):1,Bd:1):1);"
-
-
-phobius_composite_plot_fungi <- phobius_cladogram_plot("proteome_table_fungi12.txt", tree_12fungi)
-phobius_composite_plot_fungihuman <- phobius_cladogram_plot("proteome_table_fungi12human.txt", tree_12fungiplushuman)
+phobius_composite_plot_fungi <- phobius_cladogram_plot("proteome_table_fungi14.txt", tree_14fungi)
+phobius_composite_plot_fungihuman <- phobius_cladogram_plot("proteome_table_fungihuman.txt", tree_14fungiplushuman)
 
 # save
 ggsave(
@@ -436,13 +426,13 @@ ggsave(
 ggsave(
   filename = here("results", "figures", "phobius_helix_length_fungihuman.pdf"),
   plot = phobius_composite_plot_fungihuman,
-  width = 6, height = 8
+  width = 6.5, height = 8.5
 )
 
 ggsave(
   filename = here("results", "figures", "phobius_helix_length_fungihuman.png"),
   plot = phobius_composite_plot_fungihuman,
-  width = 6, height = 8, bg = "white"
+  width = 6.5, height = 8.5, bg = "white"
 )
 
 
