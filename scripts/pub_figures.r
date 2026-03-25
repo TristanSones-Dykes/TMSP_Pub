@@ -11,6 +11,7 @@ library(cowplot)
 library(ggExtra)
 library(ggplotify)
 library(ggthemes)
+library(GGally)
 library(vcd)
 library(Biostrings)
 source(here("src", "utils.r"))
@@ -399,25 +400,15 @@ ggsave(
 # Figure 4 - histograms of window lengths for each species
 # --- along with GO term labels for each species --- #
 
-# ADD TREE SECTIONS HERE
-# THEN REMOVE HUMAN FROM PLOT
-
-# Define cladogram / rough phylogenetic trees in Newick format
-tree_12fungi <- "((((((((Sc:1,Ca:1):1,((Nc:1,Mg:1):1,(Zt:1,Af:1):1):1),Sp:1),(Pg:1,(Um:1,Cn:1):1):1):1):1,Rd:1):1,Bd:1):1);"
-tree_12fungiplushuman <- paste0(
+tree_14fungi <- "(((((((((Sc:1,Ca:1):1,Pp:1),((Tr:1,(Nc:1,Mg:1):1),(Zt:1,Af:1):1):1),Sp:1),(Pg:1,(Um:1,Cn:1):1):1):1):1,Rd:1):1,Bd:1):1);"
+tree_14fungiplushuman <- paste0(
   "(",
-  stringr::str_sub(tree_12fungi, end = -3L),
+  stringr::str_sub(tree_14fungi, end = -3L),
   ",Hs:1):1);"
 )
 
-# Added 2 species.
-# Pp is Pichia pastoris
-# Tr is Trichoderma reesei
-tree_14fungi <- "(((((((((Sc:1,Ca:1):1,Pp:1),((Tr:1,(Nc:1,Mg:1):1),(Zt:1,Af:1):1):1),Sp:1),(Pg:1,(Um:1,Cn:1):1):1):1):1,Rd:1):1,Bd:1):1);"
-
-
-phobius_composite_plot_fungi <- phobius_cladogram_plot("proteome_table_fungi12.txt", tree_12fungi)
-phobius_composite_plot_fungihuman <- phobius_cladogram_plot("proteome_table_fungi12human.txt", tree_12fungiplushuman)
+phobius_composite_plot_fungi <- phobius_cladogram_plot("proteome_table_fungi14.txt", tree_14fungi)
+phobius_composite_plot_fungihuman <- phobius_cladogram_plot("proteome_table_fungihuman.txt", tree_14fungiplushuman)
 
 # save
 ggsave(
@@ -435,13 +426,13 @@ ggsave(
 ggsave(
   filename = here("results", "figures", "phobius_helix_length_fungihuman.pdf"),
   plot = phobius_composite_plot_fungihuman,
-  width = 6, height = 8
+  width = 6.5, height = 8.5
 )
 
 ggsave(
   filename = here("results", "figures", "phobius_helix_length_fungihuman.png"),
   plot = phobius_composite_plot_fungihuman,
-  width = 6, height = 8, bg = "white"
+  width = 6.5, height = 8.5, bg = "white"
 )
 
 
@@ -502,7 +493,7 @@ for (i in 2:length(deeptmhmm_3line)) {
 }
 
 
-# --- Comparing to phobius ---#
+# --- Comparing Phobius to DeepTMHMM ---#
 
 # read full length phobius results
 full_phobius <- read_csv(here("results", "phobius", "S_Cerevisiae_fullSignal.csv")) %>%
@@ -561,7 +552,7 @@ knitr::kable(contingency_table_deeplabel, caption = "Contingency table of SP/TM 
 
 
 
-# contingency table by method
+# contingency table DeepTMHMM vs Phobius
 contingency_df_deepphob <-
   combined_labelled %>%
   group_by(DeepTMHMM_type, Phobius_type) %>%
@@ -580,12 +571,12 @@ rownames(contingency_table_deepphob) <- c("SP", "TM")
 # the null hypothesis is that the two categorical variables are independent
 # the p-value rejects this, so there is a high association between the phobius label and the experimental label
 test_deepphob <- chisq.test(contingency_table_deepphob)
-p_value_deepphob <- test_length$p.value
+p_value_deepphob <- test_deepphob$p.value
 p_value_deepphob
 
 knitr::kable(contingency_table_deepphob, caption = "Contingency table of SP/TM regions predicted by both DeepTMHMM and Phobius", format = "simple")
 
-# scatter of predicted lengths by method, coloured by label match
+# Figure S3 - scatter of predicted lengths Phobius vs DeepTMHMM
 
 deepphob_lengthcor_df <-
   combined_labelled %>%
@@ -593,7 +584,8 @@ deepphob_lengthcor_df <-
   group_by(Phobius, DeepTMHMM) %>%
   summarise(
     cor_length = cor(Phobius_length, DeepTMHMM_length,
-      use = "pairwise.complete.obs"
+                     method = "pearson",
+                     use = "pairwise.complete.obs"
     ),
     count = n(),
     .groups = "drop"
@@ -604,13 +596,16 @@ deepphob_lengthcor_df <-
     both_label = paste0(count_label, "\n", cor_label)
   )
 
+SPboth1 <- combined_labelled %>% 
+  filter(Phobius_type == "SP", DeepTMHMM_type == "SP")
+
 deepphob_match_df <-
   combined_labelled %>%
   dplyr::rename(Phobius = Phobius_type, DeepTMHMM = DeepTMHMM_type) %>%
   group_by(Phobius, Phobius_length, DeepTMHMM, DeepTMHMM_length) %>%
   summarise(count = n(), .groups = "drop")
 
-deepphob_match_plot <-
+deepphob_match_plot_old <-
   ggplot(
     data = deepphob_match_df %>%
       drop_na() %>%
@@ -620,7 +615,7 @@ deepphob_match_plot <-
     aes(x = Phobius_length, y = DeepTMHMM_length)
   ) +
   geom_abline(slope = 1, intercept = 0, colour = "grey60") +
-  geom_point(aes(size = count), colour = "darkgreen", alpha = 0.5) +
+  geom_point(aes(size = count), colour = "darkgreen", alpha = 0.1) +
   geom_text(
     data = deepphob_lengthcor_df %>%
       drop_na() %>%
@@ -641,22 +636,408 @@ deepphob_match_plot <-
   scale_x_continuous(breaks = seq(0, 100, 10)) +
   scale_y_continuous(breaks = seq(0, 100, 10))
 
-deepphob_match_plot
+deepphob_match_plot <-
+  ggplot(
+    data = combined_labelled %>%
+      drop_na() %>%
+      dplyr::mutate(DeepTMHMM = factor(DeepTMHMM_type,
+                                       levels = c("TM", "SP")),
+                    Phobius = factor(Phobius_type,
+                                     levels = rev(c("TM", "SP")))
+      ),
+    aes(x = Phobius_length, y = DeepTMHMM_length)
+  ) +
+  geom_abline(slope = 1, intercept = 0, colour = "grey60") +
+  geom_point(alpha = 0.1, colour = "darkblue") +
+  geom_text(
+    data = deepphob_lengthcor_df %>%
+      drop_na() %>%
+      dplyr::mutate(DeepTMHMM = factor(DeepTMHMM,
+                                       levels = c("TM", "SP")),
+                    Phobius = factor(Phobius,
+                                     levels = rev(c("TM", "SP")))
+      ),
+    aes(label = both_label),
+    x = 60, y = 25, hjust = 1, vjust = 0, size = 3,
+    inherit.aes = FALSE
+  ) +
+  facet_grid(DeepTMHMM ~ Phobius, labeller = label_both) +
+  theme(panel.border = element_rect(fill = NA, colour = "grey90")) +
+  tune::coord_obs_pred() +
+  labs(
+    x = "Phobius predicted length",
+    y = "DeepTMHMM predicted length"
+  ) +
+  scale_x_continuous(breaks = seq(0, 100, 10)) +
+  scale_y_continuous(breaks = seq(0, 100, 10))
+
+deepphob_match_plot_wlegend <- 
+  plot_grid(deepphob_match_plot,
+            grab_legend(legend_alpha_2lengthpred()),
+            ncol = 2,
+            rel_widths = c(1, 0.2))
+
+deepphob_match_plot_wlegend
 
 # save plot
 ggsave(
   filename = here("results", "figures", "Phobius_DeepTMHMM_length_match.pdf"),
-  plot = deepphob_match_plot,
-  width = 6.5, height = 5.5, dpi = 300
+  plot = deepphob_match_plot_wlegend,
+  width = 6.5, height = 5, dpi = 300
 )
 
 ggsave(
   filename = here("results", "figures", "Phobius_DeepTMHMM_length_match.png"),
-  plot = deepphob_match_plot,
-  width = 6.5, height = 5.5, dpi = 300, bg = "white"
+  plot = deepphob_match_plot_wlegend,
+  width = 6.5, height = 5, dpi = 300, bg = "white"
 )
 
-# Figure 2 - AA Composition
+
+# Using SignalP6.0 slow sequential model
+# read gff3 file of here/results/signalp6/S_Cerevisiae/output.gff3
+# contingency table SignalP6.0 vs Phobius
+signalp6_lengthdf <-
+  here("results", "signalp6", "S_Cerevisiae_slow", "output.gff3") %>%
+  read_tsv(comment = "#",
+           col_names = c("seqid", "source", "window_type", "window_start", "window_end"),
+           col_types = "cccii") %>%
+  # remove irrelevant transcript id, calculate window length,
+  # and drop empty columns
+  mutate(seqid = str_remove_all(seqid,"-t26_1"),
+         SignalP6_length = window_end,
+         .keep = "none")
+
+Sc_allseqids <- here("data", "Proteins", "pub", "S_Cerevisiae.fasta") %>%
+  readAAStringSet() %>%
+  names(.)
+
+combined_labelled_allseqids_sigp6phob <-
+  tibble(seqid = Sc_allseqids) %>%
+  left_join(signalp6_lengthdf, by = "seqid") %>%
+  left_join(labelled_phobius, 
+            by = "seqid") %>%
+  mutate(SignalP_SP = !is.na(SignalP6_length),
+         Phobius_SP = (Phobius_type == "SP") & !is.na(Phobius_type))
+
+contingency_df_sigp6phob <- 
+  combined_labelled_allseqids_sigp6phob %>%
+  group_by(SignalP_SP, Phobius_SP) %>%
+  summarise(count = n()) %>%
+  ungroup() %>%
+  pivot_wider(names_from = Phobius_SP, values_from = count, values_fill = 0)
+
+contingency_table_sigp6phob <- as.table(as.matrix(contingency_df_sigp6phob[1:2, 2:3]))
+
+# make table pretty for display
+names(dimnames(contingency_table_sigp6phob)) <- c("SignalP6.0", "Phobius")
+rownames(contingency_table_sigp6phob) <- c("FALSE", "TRUE")
+
+# test if Phobius and SignalP6.0 agree, genome-wide
+# run chi-squared independence test and extract p-value
+# the null hypothesis is that the two categorical variables are independent
+# the p-value rejects this, so there is a high association between the phobius label and the experimental label
+test_sigp6phob <- chisq.test(contingency_table_sigp6phob)
+p_value_sigp6phob <- test_sigp6phob$p.value
+p_value_sigp6phob
+
+knitr::kable(contingency_table_sigp6phob, caption = "Contingency table of SP regions predicted by both SignalP6.0 and Phobius", format = "simple")
+
+# contingency table for verified vs SignalP6.0
+contingency_df_sigp6label <- 
+  combined_labelled_allseqids_sigp6phob %>%
+  filter( `Experimental label` %in% c("Sec63-dependent", "SRP-dependent")) %>%
+  mutate(SignalP_SP = factor(SignalP_SP, 
+                             levels = c("FALSE", "TRUE"),
+                             labels = c("SP", "other"))) %>% 
+  group_by(SignalP_SP, `Experimental label`) %>%
+  summarise(count = n()) %>%
+  ungroup() %>%
+  pivot_wider(names_from = SignalP_SP, values_from = count, values_fill = 0)
+
+
+# make table pretty for display
+names(dimnames(contingency_df_sigp6label)) <- c("Experimental label", "SignalP6 prediction")
+rownames(contingency_df_sigp6label) <- c("Sec63", "SRP")
+
+contingency_table_sigp6label <- as.table(as.matrix(contingency_df_sigp6label[, 2:3]))
+
+# test if SignalP6.0 agree on route for labeled data only
+# run chi-squared independence test and extract p-value
+# the null hypothesis is that the two categorical variables are independent
+# the p-value rejects this, so there is a high association between the phobius label and the experimental label
+test_sigp6label <- chisq.test(contingency_table_compound)
+p_value_sigp6label <- test_sigp6labelb$p.value
+p_value_sigp6label
+
+knitr::kable(contingency_table_sigp6label, caption = "Contingency table of SP regions predicted by both SignalP6.0 and Phobius", format = "simple")
+
+
+# Figure 4 - SignalP, DeepTMHMM and Phobius SP length comparison scatter
+#
+# Using SignalP6.0 slow sequential model
+# read gff3 file of here/results/signalp6/S_Cerevisiae/output.gff3
+signalp6_lengthdf <-
+  here("results", "signalp6", "S_Cerevisiae_slow", "output.gff3") %>%
+  read_tsv(comment = "#",
+           col_names = c("seqid", "source", "window_type", "window_start", "window_end"),
+           col_types = "cccii") %>%
+  # remove irrelevant transcript id, calculate window length,
+  # and drop empty columns
+  mutate(seqid = str_remove_all(seqid,"-t26_1"),
+         SignalP6_length = window_end,
+         .keep = "none")
+
+combined_labelled_SPwithSignalP6 <- 
+  full_join(combined_labelled %>%
+              filter(Phobius_type == "SP", 
+                     DeepTMHMM_type == "SP"),
+             signalp6_lengthdf,
+            by = "seqid")
+
+geom_2lengthpred <- function (data, mapping, lim = c(10,50), colour = "darkblue", ...) 
+{
+  p <- ggplot(data = data, mapping = mapping) + 
+    geom_abline(slope = 1, intercept = 0, colour = "grey60") + 
+    geom_point(alpha = 0.1, colour = colour, ...) + 
+    coord_cartesian(xlim = lim, ylim = lim) +
+    panel_border()
+  
+  corObj <- 
+    stats::cor.test(x = GGally::eval_data_col(data, mapping$x), 
+                    y = GGally::eval_data_col(data, mapping$y),
+                    method = "pearson", 
+                    use = use)
+  cor_txt <- paste0("R = ",
+                   formatC(as.numeric(corObj$estimate), 
+                     digits = 2, format = "f"))
+  p + 
+    annotate(geom = "text",
+             label = cor_txt, 
+             x = lim[2], y = lim[1],
+             hjust = 1, vjust = 0
+    )
+}
+
+geom_1lengthpred <- function (data, mapping, lim = c(10,50), colour = "darkblue", ...) 
+{
+  p <- ggplot(data = data, mapping = mapping) + 
+    geom_histogram(binwidth = 1, center = 0, fill = colour, ...) + 
+    coord_cartesian(xlim = lim) +
+    theme(axis.text.y = element_blank(),
+          axis.ticks.y = element_blank(),
+          axis.line.y = element_blank())
+  p
+}
+
+legend_alpha_2lengthpred <- function(maxval = 10, colour = "darkblue",...) {
+  # create a plot to have a legend with alpha = 0.1
+  # in black
+  toydata <- tibble(v = c(1,5,10))
+  alpha_plot <- 
+    ggplot(data = toydata) + 
+    geom_point(aes(x = v, y = v, alpha = v), 
+               colour = colour, ...) +
+    scale_alpha("Number of\nproteins",
+                limits  = c(1,10), 
+                oob = scales::squish,
+                range = c(0.1, 1),
+                breaks = c(10, 5, 1),
+                labels = c("10+","5", "1")) + 
+    theme(legend.margin = margin(1,1,1,1, unit = "mm"),
+          legend.background =
+            element_rect(color = "grey85", 
+                         size = 0.5, 
+                         linetype = 1, 
+                         fill = "NA"))
+  #gglegend(alpha_plot)
+  alpha_plot
+}
+
+
+Phobius_DeepTMHMM_SignalP6_SPlength_plot <- 
+  ggpairs(data = combined_labelled_SPwithSignalP6 %>%
+            select("Phobius" = "Phobius_length", 
+                   "DeepTMHMM" = "DeepTMHMM_length",
+                   "SignalP6.0" = "SignalP6_length"),
+          diag = list(continuous = geom_1lengthpred),
+          lower = list(continuous = geom_2lengthpred, 
+                       combo = ggally_dot_no_facet),
+          upper = "blank",
+          switch = "both",
+          showStrips = FALSE
+  ) +
+  theme(strip.placement = "outside") +
+  labs(title = "Predicted Lengths of Cleaved Signal Peptides")
+
+Phobius_DeepTMHMM_SignalP6_SPlength_plot
+
+# using grid here to allow adding legend for alpha within the ggpairs
+pdf(file = here("results", 
+                "figures", 
+                "Phobius_DeepTMHMM_SignalP6_SPlength.pdf"),
+    width = 6, height = 6)
+grid.draw(Phobius_DeepTMHMM_SignalP6_SPlength_plot)
+vp = viewport(x=.77, y=.77, width=.3, height=.3)
+pushViewport(vp)
+grid.draw(grab_legend(legend_alpha_2lengthpred()))
+upViewport()
+dev.off()
+
+png(file = here("results", 
+                "figures", 
+                "Phobius_DeepTMHMM_SignalP6_SPlength.png"),
+    width = 6, height = 6, units = "in", res = 300)
+grid.newpage()
+grid.draw(Phobius_DeepTMHMM_SignalP6_SPlength_plot)
+vp = viewport(x=.77, y=.77, width=.3, height=.3)
+pushViewport(vp)
+grid.draw(grab_legend(legend_alpha_2lengthpred()))
+upViewport()
+dev.off()
+
+
+# Figure S4 - SignalP and Phobius h-region length comparison
+#
+# Using SignalP6.0 slow sequential model
+# read gff3 file of here/results/signalp6/S_Cerevisiae/region_output.gff3
+signalp6_regions <-
+  here("results", "signalp6", "S_Cerevisiae_slow", "region_output.gff3") %>%
+  read_tsv(comment = "#",
+           col_names = c("seqid", "source", "window_type", "window_start", "window_end"),
+           col_types = "cccii") %>%
+  # remove irrelevant transcript id, calculate window length,
+  # and drop empty columns
+  mutate(seqid = str_remove_all(seqid,"-t26_1"),
+         window_length = window_end - window_start + 1,
+         X6 = NULL, X7 = NULL, X8 = NULL, X9 = NULL)
+
+# counts 
+signalp6_match_df <-
+  hregions_labelled_phobiussignalp6 %>%
+  group_by(Phobius_length, SignalP6_length) %>%
+  summarise(count = n(), .groups = "drop")
+
+signalp6_match_df
+
+# combined table of labelled proteins by phobius and SignalP
+hregions_labelled_phobiussignalp6 <- 
+  full_join(labelled_df %>%
+              filter(window_type == "SP") %>%
+              select(seqid,
+                     Phobius_start = window_start,
+                     Phobius_end = window_end,
+                     Phobius_length = window_length,
+                     Exp_label = "Experimental label"), 
+            signalp6_regions %>%
+              filter(window_type == "h-region") %>%
+              select(seqid,
+                     SignalP6_start = window_start,
+                     SignalP6_end = window_end,
+                     SignalP6_length = window_length), 
+            by = "seqid")
+
+histogram_hregion_Phobius <- 
+  ggplot(data = hregions_labelled_phobiussignalp6) + 
+  geom_histogram(aes(x = Phobius_length),
+                 binwidth = 1, center = 0,
+                 fill = "darkblue") +
+  coord_cartesian(xlim = c(0,22), expand = 0) +
+  labs(x = "Phobius predicted h-region length",
+       y = "N. proteins")
+
+histogram_hregion_Phobius_top <- 
+  histogram_hregion_Phobius +
+  theme(
+    legend.position = "none",
+    strip.background = element_blank(),
+    strip.text = element_blank(),
+    axis.text.x = element_blank(),
+    axis.title.x = element_blank(),
+    plot.margin = unit(c(.1, .1, .1, .1), "mm")
+  )
+
+histogram_hregion_SignalP6 <-
+  ggplot(data = hregions_labelled_phobiussignalp6) + 
+  geom_histogram(aes(x = SignalP6_length),
+                 binwidth = 1, center = 0,
+                 fill = "darkblue") +
+  coord_cartesian(xlim = c(0,22), expand = 0) +
+  labs(x = "SignalP6.0 predicted h-region length",
+       y = "Number of proteins") 
+
+histogram_hregion_SignalP6_side <-
+  ggplot(data = hregions_labelled_phobiussignalp6) + 
+  geom_histogram(aes(y = SignalP6_length),
+                 binwidth = 1, center = 0,
+                 fill = "darkblue") +
+  coord_cartesian(ylim = c(0,22), expand = 0) +
+  labs(x = "N. proteins") +
+  theme(
+    legend.position = "none",
+    strip.background = element_blank(),
+    strip.text = element_blank(),
+    axis.text.y = element_blank(),
+    axis.title.y = element_blank(),
+    plot.margin = unit(c(.1, .1, .1, .1), "mm")
+  )
+
+cor_hregionlength_phobiussignalp6 <- 
+  with(hregions_labelled_phobiussignalp6,
+       cor(Phobius_length, SignalP6_length,
+           method = "pearson",
+           use = "pairwise.complete.obs"))
+       
+
+hregionlength_phobiussignalp6_scatter <- 
+  ggplot(data = hregions_labelled_phobiussignalp6) +
+  geom_abline(slope = 1, intercept = 0, colour = "grey60") +
+  geom_point(aes(x = Phobius_length, y = SignalP6_length),
+             alpha = 0.1, colour ="darkblue") +
+  coord_cartesian(xlim = c(0,22), ylim = c(0,22), expand = 0) +
+  annotate(geom = "text",
+           x = 16, y = 4,
+           label = paste0("R = ", 
+                          round(cor_hregionlength_phobiussignalp6, 
+                                digits = 2))) +
+  labs(
+    x = "Phobius predicted h-region length",
+    y = "SignalP6.0 predicted h-region length"
+  ) +
+  theme(panel.border = element_rect(fill = NA, colour = "grey90"),
+        plot.margin = unit(c(.1, .1, .1, .1), "mm"))
+
+
+# Comparing h-region length Phobius vs SignalP
+# Scatter plot with marginals 
+signalp6_hregionlength_marginalsplot <-
+  plot_grid(histogram_hregion_Phobius_top,
+            grab_legend(legend_alpha_2lengthpred()),
+            hregionlength_phobiussignalp6_scatter,
+            histogram_hregion_SignalP6_side,
+            ncol = 2,
+            align = "hv",
+            axis = "tblr",
+            rel_heights = c(0.4, 1),
+            rel_widths = c(1, 0.4)
+  )
+
+signalp6_hregionlength_marginalsplot
+
+# save plot
+ggsave(
+  filename = here("results", "figures", "Phobius_SignalP6_hregionlength.pdf"),
+  plot = signalp6_hregionlength_marginalsplot,
+  width = 5, height = 4.5, dpi = 300
+)
+
+ggsave(
+  filename = here("results", "figures", "Phobius_SignalP6_hregionlength.png"),
+  width = 5, height = 4.5, dpi = 300, bg = "white"
+)
+
+
+
+# Figure 3 - AA Composition
 
 # --- Amino acid composition analysis --- #
 

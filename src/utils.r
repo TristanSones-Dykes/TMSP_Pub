@@ -126,23 +126,24 @@ phobius_cladogram_plot <- function(species_table, tree_string) {
     for (prediction in c("SP", "TM")) {
       prediction_file <- paste(species_file, prediction, sep = "_")
       path <- here("results", "GO", prediction_file, "goEnrichmentResult.tsv")
-
-      # get lowest p-value GO term
-      # after removing meaningless "cellular component"
-      go_df <- read_tsv(path)
-      go_df <- go_df %>%
-        filter(Name != "cellular component") %>%
-        filter(`P-value` == min(`P-value`))
-
-      GO_df <- rbind(
-        GO_df,
-        data.frame(
-          species = species_file,
-          prediction = prediction,
-          GO_term = go_df$Name,
-          p_value = go_df$`P-value`
-        )
-      )
+      if(file.exists(path)) {
+        # get lowest p-value GO term
+        # after removing meaningless "cellular component"
+        go_df <- read_tsv(path)
+        go_df <- go_df %>%
+          filter(Name != "cellular component") %>%
+          filter(`P-value` == min(`P-value`))
+        
+        GO_df <- rbind(
+          GO_df,
+          data.frame(
+            species = species_file,
+            prediction = prediction,
+            GO_term = go_df$Name,
+            p_value = go_df$`P-value`
+          )
+        ) 
+      }
     }
   }
 
@@ -155,7 +156,7 @@ phobius_cladogram_plot <- function(species_table, tree_string) {
   # create a dataframe with species, prediction, GO term and p-value
   GO_summary_df <- species_df %>%
     mutate(Filename = gsub(".fasta", "", Filename)) %>%
-    left_join(GO_df, by = c("Filename" = "species")) %>%
+    inner_join(GO_df, by = c("Filename" = "species")) %>%
     select(species = Nicename_splitline, prediction, GO_term, p_value) %>%
     mutate(pred_substr = paste(prediction, ": ", GO_term, sep = "")) %>%
     group_by(species) %>%

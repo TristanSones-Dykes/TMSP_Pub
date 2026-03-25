@@ -1,0 +1,304 @@
+{
+  "INFO": {
+    "failedjobs": 0,
+    "size": 18
+  },
+  "CSV_FILE": "results/signalp6/S_Cerevisiae_test20/prediction_results.txt",
+  "MATURE_FILE": "results/signalp6/S_Cerevisiae_test20/processed_entries.fasta",
+  "GFF_FILE": "results/signalp6/S_Cerevisiae_test20/output.gff3",
+  "ZIP_FILE": "",
+  "SEQUENCES": {
+    "YAL001C-t26_1": {
+      "Name": "YAL001C-t26_1",
+      "Plot_eps": "",
+      "Plot_png": "",
+      "Plot_txt": "results/signalp6/S_Cerevisiae_test20/output_YAL001C_t26_1_plot.txt",
+      "Prediction": "Other",
+      "Likelihood": [
+        1.0,
+        0.0
+      ],
+      "Protein_types": [
+        "Other",
+        "Signal Peptide (Sec/SPI)"
+      ],
+      "CS_pos": ""
+    },
+    "YAL002W-t26_1": {
+      "Name": "YAL002W-t26_1",
+      "Plot_eps": "",
+      "Plot_png": "",
+      "Plot_txt": "results/signalp6/S_Cerevisiae_test20/output_YAL002W_t26_1_plot.txt",
+      "Prediction": "Other",
+      "Likelihood": [
+        1.0,
+        0.0
+      ],
+      "Protein_types": [
+        "Other",
+        "Signal Peptide (Sec/SPI)"
+      ],
+      "CS_pos": ""
+    },
+    "YAL003W-t26_1": {
+      "Name": "YAL003W-t26_1",
+      "Plot_eps": "",
+      "Plot_png": "",
+      "Plot_txt": "results/signalp6/S_Cerevisiae_test20/output_YAL003W_t26_1_plot.txt",
+      "Prediction": "Other",
+      "Likelihood": [
+        1.0,
+        0.0
+      ],
+      "Protein_types": [
+        "Other",
+        "Signal Peptide (Sec/SPI)"
+      ],
+      "CS_pos": ""
+    },
+    "YAL005C-t26_1": {
+      "Name": "YAL005C-t26_1",
+      "Plot_eps": "",
+      "Plot_png": "",
+      "Plot_txt": "results/signalp6/S_Cerevisiae_test20/output_YAL005C_t26_1_plot.txt",
+      "Prediction": "Other",
+      "Likelihood": [
+        1.0,
+        0.0
+      ],
+      "Protein_types": [
+        "Other",
+        "Signal Peptide (Sec/SPI)"
+      ],
+      "CS_pos": ""
+    },
+    "YAL007C-t26_1": {
+      "Name": "YAL007C-t26_1",
+      "Plot_eps": "",
+      "Plot_png": "",
+      "Plot_txt": "results/signalp6/S_Cerevisiae_test20/output_YAL007C_t26_1_plot.txt",
+      "Prediction": "Signal Peptide (Sec/SPI)",
+      "Likelihood": [
+        0.0003,
+        0.9997
+      ],
+      "Protein_types": [
+        "Other",
+        "Signal Peptide (Sec/SPI)"
+      ],
+      "CS_pos": "Cleavage site between pos. 25 and 26. Probability 0.977946"
+    },
+    "YAL008W-t26_1": {
+      "Name": "YAL008W-t26_1",
+      "Plot_eps": "",
+      "Plot_png": "",
+      "Plot_txt": "results/signalp6/S_Cerevisiae_test20/output_YAL008W_t26_1_plot.txt",
+      "Prediction": "Other",
+      "Likelihood": [
+        1.0,
+        0.0
+      ],
+      "Protein_types": [
+        "Other",
+        "Signal Peptide (Sec/SPI)"
+      ],
+      "CS_pos": ""
+    },
+    "YAL009W-t26_1": {
+      "Name": "YAL009W-t26_1",
+      "Plot_eps": "",
+      "Plot_png": "",
+      "Plot_txt": "results/signalp6/S_Cerevisiae_test20/output_YAL009W_t26_1_plot.txt",
+      "Prediction": "Other",
+      "Likelihood": [
+        1.0,
+        0.0
+      ],
+      "Protein_types": [
+        "Other",
+        "Signal Peptide (Sec/SPI)"
+      ],
+      "CS_pos": ""
+    },
+    "YAL010C-t26_1": {
+      "Name": "YAL010C-t26_1",
+      "Plot_eps": "",
+      "Plot_png": "",
+      "Plot_txt": "results/signalp6/S_Cerevisiae_test20/output_YAL010C_t26_1_plot.txt",
+      "Prediction": "Other",
+      "Likelihood": [
+        1.0,
+        0.0
+      ],
+      "Protein_types": [
+        "Other",
+        "Signal Peptide (Sec/SPI)"
+      ],
+      "CS_pos": ""
+    },
+    "YAL011W-t26_1": {
+      "Name": "YAL011W-t26_1",
+      "Plot_eps": "",
+      "Plot_png": "",
+      "Plot_txt": "results/signalp6/S_Cerevisiae_test20/output_YAL011W_t26_1_plot.txt",
+      "Prediction": "Other",
+      "Likelihood": [
+        1.0,
+        0.0
+      ],
+      "Protein_types": [
+        "Other",
+        "Signal Peptide (Sec/SPI)"
+      ],
+      "CS_pos": ""
+    },
+    "YAL012W-t26_1": {
+      "Name": "YAL012W-t26_1",
+      "Plot_eps": "",
+      "Plot_png": "",
+      "Plot_txt": "results/signalp6/S_Cerevisiae_test20/output_YAL012W_t26_1_plot.txt",
+      "Prediction": "Other",
+      "Likelihood": [
+        1.0,
+        0.0
+      ],
+      "Protein_types": [
+        "Other",
+        "Signal Peptide (Sec/SPI)"
+      ],
+      "CS_pos": ""
+    },
+    "YAL013W-t26_1": {
+      "Name": "YAL013W-t26_1",
+      "Plot_eps": "",
+      "Plot_png": "",
+      "Plot_txt": "results/signalp6/S_Cerevisiae_test20/output_YAL013W_t26_1_plot.txt",
+      "Prediction": "Other",
+      "Likelihood": [
+        1.0,
+        0.0
+      ],
+      "Protein_types": [
+        "Other",
+        "Signal Peptide (Sec/SPI)"
+      ],
+      "CS_pos": ""
+    },
+    "YAL014C-t26_1": {
+      "Name": "YAL014C-t26_1",
+      "Plot_eps": "",
+      "Plot_png": "",
+      "Plot_txt": "results/signalp6/S_Cerevisiae_test20/output_YAL014C_t26_1_plot.txt",
+      "Prediction": "Other",
+      "Likelihood": [
+        1.0,
+        0.0
+      ],
+      "Protein_types": [
+        "Other",
+        "Signal Peptide (Sec/SPI)"
+      ],
+      "CS_pos": ""
+    },
+    "YAL015C-t26_1": {
+      "Name": "YAL015C-t26_1",
+      "Plot_eps": "",
+      "Plot_png": "",
+      "Plot_txt": "results/signalp6/S_Cerevisiae_test20/output_YAL015C_t26_1_plot.txt",
+      "Prediction": "Other",
+      "Likelihood": [
+        1.0,
+        0.0
+      ],
+      "Protein_types": [
+        "Other",
+        "Signal Peptide (Sec/SPI)"
+      ],
+      "CS_pos": ""
+    },
+    "YAL016W-t26_1": {
+      "Name": "YAL016W-t26_1",
+      "Plot_eps": "",
+      "Plot_png": "",
+      "Plot_txt": "results/signalp6/S_Cerevisiae_test20/output_YAL016W_t26_1_plot.txt",
+      "Prediction": "Other",
+      "Likelihood": [
+        0.9996,
+        0.0004
+      ],
+      "Protein_types": [
+        "Other",
+        "Signal Peptide (Sec/SPI)"
+      ],
+      "CS_pos": ""
+    },
+    "YAL017W-t26_1": {
+      "Name": "YAL017W-t26_1",
+      "Plot_eps": "",
+      "Plot_png": "",
+      "Plot_txt": "results/signalp6/S_Cerevisiae_test20/output_YAL017W_t26_1_plot.txt",
+      "Prediction": "Other",
+      "Likelihood": [
+        1.0,
+        0.0
+      ],
+      "Protein_types": [
+        "Other",
+        "Signal Peptide (Sec/SPI)"
+      ],
+      "CS_pos": ""
+    },
+    "YAL018C-t26_1": {
+      "Name": "YAL018C-t26_1",
+      "Plot_eps": "",
+      "Plot_png": "",
+      "Plot_txt": "results/signalp6/S_Cerevisiae_test20/output_YAL018C_t26_1_plot.txt",
+      "Prediction": "Other",
+      "Likelihood": [
+        0.9795,
+        0.0205
+      ],
+      "Protein_types": [
+        "Other",
+        "Signal Peptide (Sec/SPI)"
+      ],
+      "CS_pos": ""
+    },
+    "YAL019W-t26_1": {
+      "Name": "YAL019W-t26_1",
+      "Plot_eps": "",
+      "Plot_png": "",
+      "Plot_txt": "results/signalp6/S_Cerevisiae_test20/output_YAL019W_t26_1_plot.txt",
+      "Prediction": "Other",
+      "Likelihood": [
+        1.0,
+        0.0
+      ],
+      "Protein_types": [
+        "Other",
+        "Signal Peptide (Sec/SPI)"
+      ],
+      "CS_pos": ""
+    },
+    "YAL020C-t26_1": {
+      "Name": "YAL020C-t26_1",
+      "Plot_eps": "",
+      "Plot_png": "",
+      "Plot_txt": "results/signalp6/S_Cerevisiae_test20/output_YAL020C_t26_1_plot.txt",
+      "Prediction": "Other",
+      "Likelihood": [
+        1.0,
+        0.0
+      ],
+      "Protein_types": [
+        "Other",
+        "Signal Peptide (Sec/SPI)"
+      ],
+      "CS_pos": ""
+    }
+  },
+  "FORMAT": "txt",
+  "ORG": "eukarya",
+  "MODE": "fast",
+  "REGION_GFF_FILE": "results/signalp6/S_Cerevisiae_test20/region_output.gff3"
+}
