@@ -694,7 +694,7 @@ ggsave(
 
 
 # Using SignalP6.0 slow sequential model
-# read gff3 file of here/results/signalp6/S_Cerevisiae/output.gff3
+# read gff3 file of here/results/signalp6/S_Cerevisiae_slow/output.gff3
 # contingency table SignalP6.0 vs Phobius
 signalp6_lengthdf <-
   here("results", "signalp6", "S_Cerevisiae_slow", "output.gff3") %>%
@@ -765,8 +765,8 @@ contingency_table_sigp6label <- as.table(as.matrix(contingency_df_sigp6label[, 2
 # run chi-squared independence test and extract p-value
 # the null hypothesis is that the two categorical variables are independent
 # the p-value rejects this, so there is a high association between the phobius label and the experimental label
-test_sigp6label <- chisq.test(contingency_table_compound)
-p_value_sigp6label <- test_sigp6labelb$p.value
+test_sigp6label <- chisq.test(contingency_table_sigp6label)
+p_value_sigp6label <- test_sigp6label$p.value
 p_value_sigp6label
 
 knitr::kable(contingency_table_sigp6label, caption = "Contingency table of SP regions predicted by both SignalP6.0 and Phobius", format = "simple")
@@ -775,7 +775,7 @@ knitr::kable(contingency_table_sigp6label, caption = "Contingency table of SP re
 # Figure 4 - SignalP, DeepTMHMM and Phobius SP length comparison scatter
 #
 # Using SignalP6.0 slow sequential model
-# read gff3 file of here/results/signalp6/S_Cerevisiae/output.gff3
+# read gff3 file of here/results/signalp6/S_Cerevisiae_slow/output.gff3
 signalp6_lengthdf <-
   here("results", "signalp6", "S_Cerevisiae_slow", "output.gff3") %>%
   read_tsv(comment = "#",
@@ -899,7 +899,7 @@ dev.off()
 # Figure S4 - SignalP and Phobius h-region length comparison
 #
 # Using SignalP6.0 slow sequential model
-# read gff3 file of here/results/signalp6/S_Cerevisiae/region_output.gff3
+# read gff3 file of here/results/signalp6/S_Cerevisiae_slow/region_output.gff3
 signalp6_regions <-
   here("results", "signalp6", "S_Cerevisiae_slow", "region_output.gff3") %>%
   read_tsv(comment = "#",
@@ -1041,8 +1041,14 @@ ggsave(
 
 # --- Amino acid composition analysis --- #
 
-species_df <- read_species_table("proteome_table_fungi.txt")
-protein_paths <- here("data", "proteins", "pub", species_df$Filename)
+fungi_table <- "proteome_table_fungi.txt"
+# Replace "proteome_table_fungi.txt" with one of the tracked tables as needed,
+# for example "proteome_table_fungi12.txt" or "proteome_table_fungihuman.txt".
+if (!file.exists(here("data", "Proteins", "pub", fungi_table))) {
+  stop('Replace fungi_table with a tracked file such as "proteome_table_fungi12.txt" or "proteome_table_fungihuman.txt".')
+}
+species_df <- read_species_table(fungi_table)
+protein_paths <- here("data", "Proteins", "pub", species_df$Filename)
 
 # read in protein sequences
 proteins <- lapply(protein_paths, readAAStringSet)

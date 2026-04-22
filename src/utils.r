@@ -20,7 +20,7 @@ scale_x_helix_length <-
 
 # Read a species proteome table and add Nicename factors
 read_species_table <- function(filename) {
-  here("data", "proteins", "pub", filename) %>%
+  here("data", "Proteins", "pub", filename) %>%
     read_tsv(comment = "#") %>%
     mutate(
       Nicename = as_factor(Nicename),
@@ -107,7 +107,7 @@ read_phobius <- function(protein_AA_path) {
 
 phobius_cladogram_plot <- function(species_table, tree_string) {
   species_df <- read_species_table(species_table)
-  protein_paths <- here("data", "proteins", "pub", species_df$Filename)
+  protein_paths <- here("data", "Proteins", "pub", species_df$Filename)
 
   # read phobius results and process
   phobius_results <- lapply(protein_paths, read_phobius)

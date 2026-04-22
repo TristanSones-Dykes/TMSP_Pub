@@ -2,16 +2,18 @@
 
 Analysis of protein secretion routes in fungi, focusing on the hydrophobic helix within N-terminal signal peptides and transmembrane regions.
 
-This repository accompanies the in-progress manuscript:
+This repository accompanies the paper:
 
 > Protein secretion routes in fungi are mostly determined by the length of the hydrophobic helix in the signal peptide.
 >
 > Tristan Sones-Dykes, Atlanta Cook, Edward Wallace.
+>
+> DOI: https://doi.org/10.1101/2025.07.30.667231
 
 The analysis here was performed by:
 
-- Tristan Sones-Dykes, [@TristanSones-Dykes](https://github.com/TristanSones-Dykes), tsd5@st-andrews.ac.uk
-- Edward Wallace, [@ewallace](https://github.com/ewallace), Edward.Wallace@ed.ac.uk
+- Tristan Sones-Dykes, [@TristanSones-Dykes](https://github.com/TristanSones-Dykes)
+- Edward Wallace, [@ewallace](https://github.com/ewallace)
 
 ## Overview
 
@@ -75,7 +77,7 @@ pip install mechanicalsoup requests pandas numpy biopython beautifulsoup4 lxml
 
 - **Phobius**: No local installation needed. The analysis uses the [Phobius web server](https://phobius.sbc.su.se/) via `mechanicalsoup`.
 - **DeepTMHMM**: Results must be obtained separately from [DTU Health Tech](https://dtu.biolib.com/DeepTMHMM) and placed in `results/deepTMHMM/`.
-- **PSIPRED**: Uses the [UCL PSIPRED API](http://bioinf.cs.ucl.ac.uk/psipred/) - no local installation needed.
+- **PSIPRED**: Uses the [UCL PSIPRED API](http://bioinf.cs.ucl.ac.uk/psipred/) - no local installation needed. Set `PSIPRED_EMAIL` before submitting jobs.
 - **FungiDB**: GO enrichment uses the [FungiDB](https://fungidb.org/) web API via `src/GO_analysis.sh`.
 
 ## Repository Structure

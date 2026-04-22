@@ -26,15 +26,15 @@ SignalP 6.0i slow sequential predictions on Saccharomyces cerevisiae whole prote
 
 ## SignalP fast
 
-Code used to install and run SignalP6.0 fast, from the directory TMSP_PUB was:
+Code used to install and run SignalP6.0 fast from the repository root was:
 
 ```
 conda create -n run-signalp6 python=3.10 numpy=1.23 pybiolib
 conda activate run-signalp6 
 biolib run DTU/SignalP-6 --help
 mkdir results/signalp6
-mkdir results/signalp6/S_Cerevisiae 
-biolib run DTU/SignalP-6 --fastafile data/Proteins/full/S_Cerevisiae.fasta --output_dir results/signalp6/S_Cerevisiae --format txt --organism eukarya --mode fast
+mkdir results/signalp6/S_Cerevisiae_fast
+biolib run DTU/SignalP-6 --fastafile data/Proteins/full/S_Cerevisiae.fasta --output_dir results/signalp6/S_Cerevisiae_fast --format txt --organism eukarya --mode fast
 ```
 
 However, running via biolib uses the SignalP server, has limits of < 1000 proteins, and
@@ -46,11 +46,11 @@ Installed it locally following [Installation Instructions](https://github.com/ft
 - Open the directory containing the downloaded package, and install it by executing the following command.
 - `pip install signalp-6-package/`
 
-**Note:** model directory path is hard-coded on EW's laptop computer, `/Users/ewallac2/Downloads/signalp6_*`. Change this to run on a different system.
+**Note:** replace `<path-to-signalp6-models>` with the local path to the unpacked SignalP6 model directory on your machine.
 
 Then ran on a test file with 20 proteins by running:
 ```
-signalp6 --fastafile data/Proteins/full/S_Cerevisiae_test20.fasta --output_dir results/signalp6/S_Cerevisiae_test20_fast --format txt --organism eukarya --mode fast --model_dir /Users/ewallac2/Downloads/signalp6_fast/signalp-6-package/models
+signalp6 --fastafile data/Proteins/full/S_Cerevisiae_test20.fasta --output_dir results/signalp6/S_Cerevisiae_test20_fast --format txt --organism eukarya --mode fast --model_dir <path-to-signalp6-models>
 ```
 
 This produced sensible outputs
@@ -72,12 +72,12 @@ YAL007C-t26_1	SignalP-6.0	c-region	21	25	.	.	.	.
 Ran on full set of S. cerevisiae proteins with:
 
 ```
-signalp6 --fastafile data/Proteins/full/S_Cerevisiae.fasta --output_dir results/signalp6/S_Cerevisiae_fast --format txt --organism eukarya --mode fast --model_dir /Users/ewallac2/Downloads/signalp6_fast/signalp-6-package/models
+signalp6 --fastafile data/Proteins/full/S_Cerevisiae.fasta --output_dir results/signalp6/S_Cerevisiae_fast --format txt --organism eukarya --mode fast --model_dir <path-to-signalp6-models>
 ```
 
 and removed 1000s of `*_plot.txt` files with:
 ```
-rm results/signalp6/S_Cerevisiae/*_plot.txt
+rm results/signalp6/S_Cerevisiae_fast/*_plot.txt
 ```
 
 ## SignalP slow sequential
@@ -88,13 +88,12 @@ Next downloaded slow_sequential model per SignalP instructions. Used the same si
 conda activate run-signalp6
 ```
 
-Code used to run SignalP6.0 slow_sequential model, from the directory TMSP_PUB, on test file, was:
+Code used to run SignalP6.0 slow_sequential on a test file from the repository root was:
 ```
-signalp6 --fastafile data/Proteins/full/S_Cerevisiae_test20.fasta --output_dir results/signalp6/S_Cerevisiae_test20_slow --format txt --organism eukarya --mode slow-sequential --model_dir /Users/ewallac2/Downloads/signalp6_slow_sequential/signalp-6-package/models
+signalp6 --fastafile data/Proteins/full/S_Cerevisiae_test20.fasta --output_dir results/signalp6/S_Cerevisiae_test20_slow --format txt --organism eukarya --mode slow-sequential --model_dir <path-to-signalp6-models>
 ```
 
 Then on full proteome was:
 ```
-signalp6 --fastafile data/Proteins/full/S_Cerevisiae.fasta --output_dir results/signalp6/S_Cerevisiae_slow --format txt --organism eukarya --mode slow-sequential --model_dir /Users/ewallac2/Downloads/signalp6_slow_sequential/signalp-6-package/models
+signalp6 --fastafile data/Proteins/full/S_Cerevisiae.fasta --output_dir results/signalp6/S_Cerevisiae_slow --format txt --organism eukarya --mode slow-sequential --model_dir <path-to-signalp6-models>
 ```
-

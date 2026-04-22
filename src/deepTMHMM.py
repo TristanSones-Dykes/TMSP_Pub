@@ -14,7 +14,7 @@ def extract_deepTMHMM(origin: str, max_regions: Optional[int] = None) -> pd.Data
 
     # split each protein into list of lines, remove first and last lines of each protein
     proteins = [
-        [re.sub("\s+", " ", line).strip() for line in protein.split("\n")[1:-1]]  # type: ignore
+        [re.sub(r"\s+", " ", line).strip() for line in protein.split("\n")[1:-1]]  # type: ignore
         for protein in proteins
     ]
 

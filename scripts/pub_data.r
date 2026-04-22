@@ -13,7 +13,7 @@ source(here("src", "utils.r"))
 # --- Run all sequences through phobius --- #
 
 species_df <- read_species_table("proteome_table_fungi12.txt")
-protein_paths <- here("data", "proteins", "pub", species_df$Filename)
+protein_paths <- here("data", "Proteins", "pub", species_df$Filename)
 species_names <- species_df$Nicename
 
 # read in protein sequences
@@ -40,7 +40,7 @@ Hessa <- scales[, c("aa", "Hessa")]
 colnames(Hessa) <- c("V1", "V2")
 
 # read protein sequence and calculate hydropathy for KD and Rose
-AA_stringset <- readAAStringSet(here("data", "proteins", "pub", "S_Cerevisiae.fasta"))
+AA_stringset <- readAAStringSet(here("data", "Proteins", "pub", "S_Cerevisiae.fasta"))
 KD_df <- add_compound_hydropathy_score(S_Cerevisiae, AA_stringset, scale = KD, include_max = TRUE)
 rose_df <- add_compound_hydropathy_score(S_Cerevisiae, AA_stringset, scale = rose, include_max = TRUE)
 Hessa_df <- add_compound_hydropathy_score(S_Cerevisiae, AA_stringset, scale = Hessa, include_max = TRUE)
@@ -141,10 +141,10 @@ write_protein_lists(human_results, "human")
 
 
 # --- Create 60-length files for new species --- #
-new_species_df <- here("data", "proteins", "full", "proteome_table.txt") %>%
+new_species_df <- here("data", "Proteins", "full", "proteome_table.txt") %>%
   read_tsv(comment = "#") %>%
   mutate(Nicename = as_factor(Nicename))
-new_protein_paths <- here("data", "proteins", "full", new_species_df$Filename)
+new_protein_paths <- here("data", "Proteins", "full", new_species_df$Filename)
 
 # read in protein sequences
 new_proteins <- lapply(new_protein_paths, readAAStringSet)
@@ -160,7 +160,7 @@ for (i in seq_along(new_proteins)) {
   # remove the .fasta extension
   file_name <- str_split(new_species_df$Filename[i], "\\.")[[1]][1]
   # create the path
-  subset_path <- here("data", "proteins", "pub", paste(file_name, "_first_60.fasta", sep = ""))
+  subset_path <- here("data", "Proteins", "pub", paste(file_name, "_first_60.fasta", sep = ""))
   # write the file
   writeXStringSet(new_proteins[[i]], subset_path)
   subset_paths <- c(subset_paths, subset_path)
@@ -174,7 +174,7 @@ phobius_plot <- plot_helix_length_histogram(phobius_df)
 
 # --- Plots for industry-relevant species --- #
 new_species_df <- read_species_table("proteome_table_industry.txt")
-new_protein_paths <- here("data", "proteins", "pub", new_species_df$Filename)
+new_protein_paths <- here("data", "Proteins", "pub", new_species_df$Filename)
 
 new_phobius_results <- lapply(new_protein_paths, run_phobius)
 phobius_df <- process_phobius_results(new_phobius_results, new_species_df$Nicename)

@@ -8,6 +8,7 @@ from Bio import SeqIO
 # define urls for submission and download
 submission_uri = "http://bioinf.cs.ucl.ac.uk/psipred/api/submission"
 download_uri = "http://bioinf.cs.ucl.ac.uk/psipred/api"
+psipred_email = os.environ.get("PSIPRED_EMAIL")
 
 # split input fasta into individual sequence files of length 60
 if not os.path.exists("temp"):
@@ -45,12 +46,15 @@ for seq_file in os.listdir("temp"):
 
 # submit each sequence to the server
 for seq_file in os.listdir("temp"):
+    if not psipred_email:
+        raise RuntimeError("Set PSIPRED_EMAIL before submitting PSIPRED jobs.")
+
     # setup the request
     payload = {"input_data": (seq_file, open("temp/" + seq_file, "rb"))}
     data = {
         "job": "psipred",
         "submission_name": seq_file,
-        "email": "tristansonesdykes@outlook.com",
+        "email": psipred_email,
     }
 
     # send the request
